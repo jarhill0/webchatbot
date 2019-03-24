@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Exchanges</title>
+</head>
+<body>
+{% include "header.html" %}
+<h1>Exchanges</h1>
+
+<b>Notice!</b> Chat will not function without an exchange named
+<code>start</code>! This exchange's prompt will be ignored, but its default
+successor and keywords will be used. This is because the conversation will
+always be initiated by the user.
+
+<p>
+    <a href="{{ url_for('new_exchange') }}">
+        <button>Add exchange</button>
+    </a>
+</p>
+
+{% for name, prompt, default in exchanges %}
+    <div>
+        <a id="{{ name }}">
+            <b>Name</b>: <code>{{ name }}</code>
+        </a>
+        <br><b>Prompt</b>: {{ prompt }}
+        {% if default %}
+            <br><b>Default successor</b>: <a href="#{{ default }}">
+            <code>{{ default }}</code></a>
+        {% endif %}
+        {% set kw_dict = keywords(name) %}
+        {% if kw_dict %}
+            <br><b>Keywords</b>:
+            <ul>
+                {% for keyword, successor in kw_dict.items() %}
+                    <li><i>{{ keyword }}</i>: <a href="#{{ successor }}">
+                        <code>{{ successor }}</code></a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <form action="{{ url_for('edit_exchange') }}" method="get">
+            <input type="text" name="exchange" value="{{ name }}" hidden>
+            <button>Edit {{ name }}</button>
+        </form>
+        <form action="{{ url_for('delete_exchange') }}" method="post">
+            <input type="text" name="exchange_name" value="{{ name }}" hidden>
+            <button>Delete {{ name }}</button>
+        </form>
+    </div>
+    <br>
+{% endfor %}
+</body>
+</html>

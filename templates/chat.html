@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Webchat</title>
+
+    <script>
+        const session = Math.random().toString(36).substring(7);
+
+        window.onload = function () {
+            document.getElementById("userMessage").onkeydown = function (event) {
+                if (event.code === "Enter") {
+                    updateChat();
+                }
+            }
+        };
+
+        function updateChat() {
+            const userMessage = document.getElementById("userMessage");
+            const userMessageContent = userMessage.value;
+            const chatLog = document.getElementById("chatLog");
+            const userP = document.createElement("p");
+            userP.innerText = "You: " + userMessageContent;
+            chatLog.appendChild(userP);
+            userMessage.value = "";
+
+            getResponse(userMessageContent);
+        }
+
+        function appendResponse(response) {
+            const chatLog = document.getElementById("chatLog");
+            const botP = document.createElement("p");
+            botP.innerText = "Bot: " + response;
+            chatLog.appendChild(botP);
+        }
+
+        function getResponse(message) {
+            httpPostAsync("{{ url_for('get_chat_message') }}",
+                {'session': session, 'message': message},
+                appendResponse);
+        }
+
+        // modified from https://stackoverflow.com/a/4033310/ and https://stackoverflow.com/a/38982661/
+        function httpPostAsync(url, body, callback) {
+            const xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState === 4 && xmlHttp.status === 200)
+                    callback(xmlHttp.responseText);
+            };
+            xmlHttp.open("POST", url, true); // true for asynchronous
+            xmlHttp.setRequestHeader('Content-Type', 'application/json');
+            xmlHttp.send(JSON.stringify(body));
+        }
+    </script>
+</head>
+<body>
+{% include "header.html" %}
+<div id="chatLog"></div>
+<label>Message
+    <input type="text" id="userMessage"></label>
+<button onclick="updateChat()">Send</button>
+</body>
+</html>

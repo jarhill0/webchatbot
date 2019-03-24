@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        {% if current_exchange is defined %}
+            Edit Exchange
+        {% else %}
+            New Exchange
+        {% endif %}
+    </title>
+    {% if current_exchange is defined %}
+        {% set keyword_dict=keywords(current_exchange) %}
+    {% endif %}
+    <script>
+        let keywords;
+        let keywordsCounter = {% if keyword_dict is defined %}
+            {{ keyword_dict|length }}
+        {% else %}
+            0
+        {% endif %};
+
+        function setUp() {
+            keywords = document.getElementById("keywords");
+            if ({{ 'true' if current_exchange is not defined else 'false' }})
+                for (let i = 0; i < 3; i++)
+                    addRow();
+        }
+
+        function addRow() {
+            keywords.appendChild(makeRow());
+        }
+
+        function removeRow() {
+            const children = keywords.childNodes;
+            let toRemove = children.item(children.length - 1);
+            while (toRemove.tagName !== "DIV") {
+                keywords.removeChild(toRemove);
+                toRemove = children.item(children.length - 1);
+            }
+            if (isEmpty(toRemove) && keywordsCounter >= 1) {
+                keywords.removeChild(toRemove);
+                keywordsCounter--;
+            }
+        }
+
+        function isEmpty(row) {
+            const children = row.childNodes;
+            for (let i = 0; i < children.length; i++) {
+                for (let j = 0; j < children.item(i).childNodes.length; j++) {
+                    const child = children.item(i).childNodes.item(j);
+                    if (child.tagName === "INPUT" && child.value !== "")
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        function makeRow() {
+            const row = document.createElement("div");
+
+            { // for the keyword(s)
+                const label = document.createElement("label");
+                label.innerText = "Keyword " + ++keywordsCounter + " ";
+                const input = document.createElement("input");
+                input.type = "text";
+                input.name = "keyword";
+                label.appendChild(input);
+                row.appendChild(label);
+            }
+
+            { // for the delegated interaction
+                const label = document.createElement("label");
+                label.innerText = " Destination exchange ";
+                const input = document.createElement("input");
+                input.type = "text";
+                input.name = "exchange";
+                label.appendChild(input);
+                row.appendChild(label);
+            }
+
+            return row;
+        }
+    </script>
+</head>
+<body onload="setUp()">
+{% include "header.html" %}
+<h1>
+    {% if current_exchange is not defined %}
+        New Exchange
+    {% else %}
+        Modifying {{ current_exchange }}
+    {% endif %}
+</h1>
+
+<form action="{{ url_for('new_exchange', existing=current_exchange) }}"
+      method="post">
+    <label>
+        Name
+        <input type="text" name="exchange-name"
+                {% if current_exchange is defined %}
+               value="{{ current_exchange }}"
+                {% endif %}
+        >
+    </label>
+    <br>
+    <label>
+        Prompt
+        <input type="text" name="exchange-prompt"
+                {% if current_exchange is defined %}
+               value="{{ prompt(current_exchange) }}"
+                {% endif %}
+        >
+    </label>
+    <br>
+    <label>
+        Default successor interaction (optional)
+        <input type="text" name="exchange-default"
+                {% if current_exchange is defined %}
+                    {% set exchange_default=default(current_exchange) %}
+               value="{{ exchange_default if exchange_default is not none }}"
+                {% endif %}
+        >
+    </label>
+    <br>
+    <div id="keywords">
+        {% if current_exchange is defined %}
+            {% for keyword, exchange in keyword_dict.items() %}
+                <div>
+                    <label>Keyword {{ loop.index }}
+                        <input type="text" name="keyword"
+                               value="{{ keyword }}">
+                    </label>
+                    <label>
+                        Destination exchange <input type="text" name="exchange"
+                                                    value="{{ exchange }}">
+                    </label>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    <br>
+    <input type="button" onclick="addRow()" title="add row" value="+">
+    <input type="button" onclick="removeRow()" title="remove row" value="-">
+    <br>
+    <button>Submit</button>
+</form>
+</body>
+</html>
