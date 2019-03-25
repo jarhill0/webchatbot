@@ -32,6 +32,7 @@
             const botP = document.createElement("p");
             botP.innerText = "Bot: " + response;
             chatLog.appendChild(botP);
+            chatLog.scrollTop = chatLog.scrollHeight;  // scroll to bottom
         }
 
         function getResponse(message) {
@@ -52,12 +53,30 @@
             xmlHttp.send(JSON.stringify(body));
         }
     </script>
+    <style>
+        #chatLog {
+            position: absolute;
+            overflow-y: scroll;
+            width: 70%;
+            max-height: 70%;
+        }
+
+        #messageEntry {
+            position: absolute;
+            left: 5px;
+            bottom: 0;
+            height: 100px;
+        }
+    </style>
 </head>
 <body>
 {% include "header.html" %}
 <div id="chatLog"></div>
-<label>Message
-    <input type="text" id="userMessage"></label>
-<button onclick="updateChat()">Send</button>
+<div id="messageEntry">
+    <label>Message
+        <input type="text" id="userMessage">
+    </label>
+    <button onclick="updateChat()">Send</button>
+</div>
 </body>
 </html>
