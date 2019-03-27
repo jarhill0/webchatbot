@@ -1,5 +1,7 @@
 import sqlite3
+from datetime import datetime, timedelta
 from os.path import dirname, join
+from secrets import token_hex
 
 
 class Storage:
@@ -69,6 +71,38 @@ class Storage:
             'CREATE TABLE IF NOT EXISTS {} ({})'.format(self.TABLE_NAME,
                                                         self.TABLE_SCHEMA))
         conn.commit()
+
+
+class Cookies(Storage):
+    TABLE_NAME = 'cookies'
+    TABLE_SCHEMA = 'id INTEGER PRIMARY KEY NOT NULL, cookie TEXT NOT NULL, expiration DATETIME NOT NULL'
+    VALID_LENGTH = timedelta(days=7)
+
+    def check(self, cookie):
+        """Check if a cookie is valid."""
+        cursor = self.connection().cursor()
+        return cursor.execute('SELECT * FROM {} WHERE cookie=? AND expiration>?'.format(self.TABLE_NAME),
+                              (cookie, int(datetime.now().timestamp()))).fetchone() is not None
+
+    def new(self):
+        """Store a new cookie and return it."""
+        val = token_hex(30)
+        exp_date = int((datetime.now() + self.VALID_LENGTH).timestamp())
+        conn = self.connection()
+        conn.cursor().execute('INSERT INTO {} VALUES (NULL, ?, ?)'.format(self.TABLE_NAME), (val, exp_date))
+        conn.commit()
+        return val
+
+    def prune(self):
+        """Remove cookies that are out-of-date."""
+        now = int(datetime.now().timestamp())
+        conn = self.connection()
+        conn.cursor().execute('DELETE FROM {} WHERE expiration < ?'.format(self.TABLE_NAME), (now,))
+        conn.commit()
+
+    def remove(self, cookie):
+        """Remove a cookie as part of a logout."""
+        self._remove('cookie', cookie)
 
 
 class Prompts(Storage):
@@ -187,6 +221,30 @@ class Keywords(Storage):
                                'exchange=? AND keyword=?'.format(
                     tab=self.TABLE_NAME), (destination, name, keyword))
         conn.commit()
+
+
+class Secrets(Storage):
+    TABLE_NAME = 'secrets'
+    TABLE_SCHEMA = 'name TEXT PRIMARY KEY NOT NULL, value TEXT'
+
+    def __getitem__(self, item):
+        cursor = self.connection().cursor()
+        result = cursor.execute('SELECT value from {} where name=?'.format(self.TABLE_NAME), (item,)).fetchone()
+        if result is None:
+            raise KeyError('No known secret with name {!r}.'.format(item))
+        return result[0]
+
+    def __setitem__(self, key, value):
+        conn = self.connection()
+        cursor = conn.cursor()
+        cursor.execute('REPLACE INTO {} VALUES (?, ?)'.format(self.TABLE_NAME), (key, value))
+        conn.commit()
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
 
 class Sessions(Storage):

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Log in</title>
+</head>
+<body>
+<h1>Log in</h1>
+
+Enter the password to continue.
+
+<form action="{{ url_for('authenticate') }}" method="post">
+    <label>
+        Password
+        <input name="password" type="password">
+    </label>
+    <br>
+    <button>Go</button>
+</form>
+</body>
+</html>
