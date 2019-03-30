@@ -42,13 +42,22 @@ def prompt(exchange_name):
     return PROMPTS.get_prompt(exchange_name)
 
 
-def save_to_disk(exchange_name, prompt, keyword_map, default=None):
+def rank(exchange_name):
+    """Get the rank of an Exchange.
+
+    :param exchange_name: The name of the Exchange.
+    """
+    return PROMPTS.get_rank(exchange_name)
+
+
+def save_to_disk(exchange_name, prompt_, keyword_map, default_=None, rank_=None):
     """Save an Exchange to disk, updating existing entries if needed.
 
     :param exchange_name: The name of the Exchange.
-    :param prompt: The Exchange's prompt.
+    :param prompt_: The Exchange's prompt.
     :param keyword_map: A dict mapping keywords to Exchange names.
-    :param default: The default successer Exchange (default: None).
+    :param default_: The default successor Exchange (default: None).
+    :param rank_: The Exchange's rank.
     """
-    PROMPTS.set(exchange_name, prompt, default)
+    PROMPTS.set(exchange_name, prompt_, default_, rank_)
     KEYWORDS.set_many(exchange_name, keyword_map)

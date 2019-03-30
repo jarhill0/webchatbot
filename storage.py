@@ -109,11 +109,11 @@ class Prompts(Storage):
     """Class to store the prompts and defaults of Exchanges."""
     TABLE_NAME = 'prompts'
     TABLE_SCHEMA = ('name TEXT PRIMARY KEY NOT NULL, prompt TEXT NOT NULL, '
-                    'def TEXT')
+                    'def TEXT, rank INTEGER')
 
     def __iter__(self):
         """Iterate over the names, prompts, and defaults of Exchanges."""
-        return self._iterate_columns('name', 'prompt', 'def')
+        return self._iterate_columns('name', 'prompt', 'def', order_by='ORDER BY rank ASC')
 
     def delete(self, name):
         """Delete an Exchange from the Prompts table.
@@ -147,19 +147,28 @@ class Prompts(Storage):
         """
         return self._get_row('name', name, 'prompt')[0]
 
-    def set(self, name, prompt, default=None):
+    def get_rank(self, name):
+        """Get an Exchange's rank.
+
+        :param name: The name of the Exchange.
+        :returns: The rank of the Exchange, as an int.
+        """
+        return self._get_row('name', name, 'rank')[0]
+
+    def set(self, name, prompt, default=None, rank=None):
         """Set the prompt for an Exchange.
 
         :param name: The name of the Exchange.
         :param prompt: The prompt for the Exchange.
         :param default: The default target Exchange of this Exchange
             (default: None).
+        :param rank: The rank of this Exchange (default: None)
         """
         conn = self.connection()
         cursor = conn.cursor()
-        cursor.execute('REPLACE INTO {} VALUES (?, ?, ?)'.format(
+        cursor.execute('REPLACE INTO {} VALUES (?, ?, ?, ?)'.format(
             self.TABLE_NAME),
-            (name, prompt, default))
+            (name, prompt, default, rank))
         conn.commit()
 
 

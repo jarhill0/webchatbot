@@ -105,6 +105,15 @@
     </label>
     <br>
     <label>
+        Rank
+        <input type="number" name="exchange-rank"
+                {% if current_exchange is defined %}
+               value="{{ rank(current_exchange) }}"
+                {% endif %}
+        >
+    </label>
+    <br>
+    <label>
         Prompt
         <textarea name="exchange-prompt" rows="6"
                   cols="30">{{ prompt(current_exchange) if current_exchange is defined }}</textarea>
