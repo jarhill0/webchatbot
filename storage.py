@@ -137,7 +137,10 @@ class Prompts(Storage):
         :returns: The name of the successor as a str, if it exists, otherwise
             None.
         """
-        return self._get_row('name', name, 'def')[0]
+        row = self._get_row('name', name, 'def')
+        if row:
+            row = row[0]
+        return row
 
     def get_prompt(self, name):
         """Get an Exchange's prompt.
@@ -145,7 +148,10 @@ class Prompts(Storage):
         :param name: The name of the Exchange.
         :returns: The prompt for the Exchange, as a str.
         """
-        return self._get_row('name', name, 'prompt')[0]
+        row = self._get_row('name', name, 'prompt')
+        if row:
+            row = row[0]
+        return row
 
     def get_rank(self, name):
         """Get an Exchange's rank.
