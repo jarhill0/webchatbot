@@ -278,6 +278,10 @@ class Sessions(Storage):
                     'curr_exchange TEXT NOT NULL, '
                     'data TEXT')
 
+    def __iter__(self):
+        """Iterate over the Sessions' IDs, current exchanges, and data (possibly None)."""
+        return self._iterate_columns('id', 'curr_exchange', 'data')
+
     def get(self, session):
         """Get the state of a session.
 
