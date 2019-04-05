@@ -13,6 +13,13 @@ COOKIES = Cookies()
 SECRETS = Secrets()
 
 
+def remove_prefix(string, prefix):
+    """Remove prefix from string and return it."""
+    if string[:len(prefix)] != prefix:
+        return string
+    return string[len(prefix):]
+
+
 def authenticated(route):
     """Wrap a function that needs to be authenticated."""
 
@@ -20,7 +27,7 @@ def authenticated(route):
     def auth_wrapper(*args, **kwargs):
         if 'auth' in request.cookies and COOKIES.check(request.cookies['auth']):
             return route(*args, **kwargs)
-        return redirect(url_for('log_in', dest=request.path))
+        return redirect(url_for('log_in', dest=remove_prefix(request.url, request.url_root)))
 
     return auth_wrapper
 
