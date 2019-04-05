@@ -1,6 +1,8 @@
-from exchange_translation import exchange_type, prompt, default as default_func
+from json import loads
+
+from exchange_translation import default as default_func, exchange_type, prompt
 from name_exchange import name_exchange
-from storage import Keywords, Prompts, Sessions
+from storage import Keywords, Sessions
 from text_util import clean
 
 KEYWORDS = Keywords()
@@ -31,12 +33,12 @@ def process_chat(session, message):
         if mess_word in mapping:
             new_exchange = mapping[mess_word]
             SESSIONS.set(session, new_exchange, )
-            return prompt(new_exchange, data)
+            return prompt(new_exchange, loads(data))
 
     # default case
     default = default_func(curr_exchange)
     if default:
         SESSIONS.set(session, default, data)
-        return prompt(default, data)
+        return prompt(default, loads(data))
     else:
         return None
