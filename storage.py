@@ -294,6 +294,13 @@ class Sessions(Storage):
             return None, None
         return retval
 
+    def delete(self, session):
+        """Delete a particular session.
+
+        :param session: The ID of thesession to delete.
+        """
+        self._remove('id', session)
+
     def set(self, session, exchange, data=None):
         """Set the state of a session.
 

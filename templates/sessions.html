@@ -10,7 +10,8 @@
 
 <ol>
     {% for session_id, exchange, data in sessions %}
-        <li>{{ session_id }}: <i>{{ exchange }}</i>
+        <li>
+            {{ session_id }}: <i>{{ exchange }}</i>
             {% if data %}
                 <ul>
                     {% for key, value in data.items() %}
@@ -18,6 +19,11 @@
                     {% endfor %}
                 </ul>
             {% endif %}
+            <form action="{{ url_for('clear_session') }}" method="post">
+                <input type="text" name="session_id" value="{{ session_id }}" hidden>
+                <button>Clear {{ session_id }}</button>
+            </form>
+            <br>
         </li>
     {% endfor %}
 </ol>

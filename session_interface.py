@@ -18,6 +18,14 @@ def all_sessions():
         yield session_id, curr_exchange, data
 
 
+def clear_session(session_id):
+    """Clear a particular session.
+
+    :param session_id: The ID of the session to clear.
+    """
+    SESSIONS.delete(session_id)
+
+
 def get_session(session_id):
     """Get the state of a session.
 

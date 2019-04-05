@@ -4,7 +4,7 @@ from flask import Flask, Response, make_response, redirect, render_template, req
 
 import exchange_translation
 from process_chat import process_chat
-from session_interface import all_sessions
+from session_interface import all_sessions, clear_session as session_clear
 from storage import Cookies, Secrets
 
 app = Flask(__name__)
@@ -110,6 +110,15 @@ def get_chat_message():
 @authenticated
 def sessions():
     return render_template('sessions.html', sessions=all_sessions())
+
+
+@app.route('/delete_session', methods=['POST'])
+@authenticated
+def clear_session():
+    to_delete = request.values.get('session_id')
+    if to_delete is not None:
+        session_clear(to_delete)
+    return redirect(url_for('sessions'))
 
 
 @app.route('/login', methods=['GET'])
