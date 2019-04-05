@@ -45,8 +45,11 @@
         function httpPostAsync(url, body, callback) {
             const xmlHttp = new XMLHttpRequest();
             xmlHttp.onreadystatechange = function () {
-                if (xmlHttp.readyState === 4 && xmlHttp.status === 200)
-                    callback(xmlHttp.responseText);
+                if (xmlHttp.readyState === 4)
+                    if (xmlHttp.status === 200)
+                        callback(xmlHttp.responseText);
+                    else
+                        callback("[Server error]");
             };
             xmlHttp.open("POST", url, true); // true for asynchronous
             xmlHttp.setRequestHeader('Content-Type', 'application/json');
