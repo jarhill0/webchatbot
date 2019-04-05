@@ -1,6 +1,6 @@
 from exchange_translation import default as default_func, exchange_type, keywords, prompt
 from name_exchange import name_exchange
-from session_interface import get_session, set_session
+from session_interface import get_session, log, set_session
 from text_util import clean
 
 EXCHANGE_TYPES = {'name': name_exchange}
@@ -13,6 +13,13 @@ def process_chat(session, message):
     :param message: The user's message.
     :returns: The next message, if there is an appropriate one, otherwise None.
     """
+    log(session=session, message=message, is_from_user=True)
+    response = process_chat_real(session, message)
+    log(session=session, message=response, is_from_user=False)
+    return response
+
+
+def process_chat_real(session, message):
     curr_exchange, data = get_session(session)  # guarantees data to be a dict
     if curr_exchange is None:
         curr_exchange = 'start'

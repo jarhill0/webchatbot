@@ -11,7 +11,7 @@
 <ol>
     {% for session_id, exchange, data in sessions %}
         <li>
-            {{ session_id }}: <i>{{ exchange }}</i>
+            <a href="{{ url_for('view_log', log=session_id) }}">{{ session_id }}</a>: <i>{{ exchange }}</i>
             {% if data %}
                 <ul>
                     {% for key, value in data.items() %}

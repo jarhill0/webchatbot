@@ -1,8 +1,9 @@
 from json import dumps, loads
 
-from storage import Sessions
+from storage import ChatLog, Sessions
 
 SESSIONS = Sessions()
+CHATLOG = ChatLog()
 
 
 def all_sessions():
@@ -53,3 +54,30 @@ def set_session(session_id, current_exchange, data):
         data = dumps(data)
 
     SESSIONS.set(session_id, current_exchange, data)
+
+
+def log(session, message, is_from_user):
+    """Add a log entry.
+
+    :param session: The session ID.
+    :param message: The message contents as str.
+    :param is_from_user: Whether or not the message is from the user, as a bool.
+    """
+    CHATLOG.log(session=session, message=message, is_from_user=is_from_user)
+
+
+def all_logged_convos():
+    """Yield all conversations that have been logged.
+
+    :returns: An iterable with the IDs of all logged conversations.
+    """
+    return CHATLOG
+
+
+def get_log(session):
+    """Get the log of a particular session.
+
+    :param session: The name of the session.
+    :returns: An iterable of (message, is_from_user, timestamp).
+    """
+    return CHATLOG.get(session)

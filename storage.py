@@ -73,6 +73,47 @@ class Storage:
         conn.commit()
 
 
+class ChatLog(Storage):
+    """Class to represent logged chats."""
+    TABLE_NAME = 'chatlog'
+    TABLE_SCHEMA = ('session_id TEXT NOT NULL, '
+                    'message_contents TEXT NOT NULL, '
+                    'user_message INTEGER NOT NULL, '
+                    'message_time DATETIME NOT NULL')
+
+    def __iter__(self):
+        """Iterate over all known chat logs, returning their session IDs."""
+        return iter(set(self._iterate_column('session_id')))
+
+    def get(self, session):
+        """Get the log of a session.
+
+        :param session: The session identifier.
+        :returns: An iterable of (message_contents, is_from_user, timestamp).
+        """
+        cursor = self.connection().cursor()
+        for text, is_from_user, timestamp in cursor.execute(
+                'SELECT message_contents, user_message, message_time FROM {tab} WHERE session_id=? '
+                'ORDER BY message_time ASC'.format(
+                    tab=self.TABLE_NAME),
+                (session,)):
+            yield text, bool(is_from_user), datetime.fromtimestamp(timestamp)
+
+    def log(self, session, message, is_from_user):
+        """Add a log entry.
+
+        :param session: The session ID.
+        :param message: The message contents as str.
+        :param is_from_user: Whether or not the message is from the user, as a bool.
+        """
+        conn = self.connection()
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO {} VALUES (?, ?, ?, ?)'.format(
+            self.TABLE_NAME),
+            (session, message, is_from_user, int(datetime.now().timestamp())))
+        conn.commit()
+
+
 class Cookies(Storage):
     TABLE_NAME = 'cookies'
     TABLE_SCHEMA = 'id INTEGER PRIMARY KEY NOT NULL, cookie TEXT NOT NULL, expiration DATETIME NOT NULL'

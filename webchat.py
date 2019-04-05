@@ -4,7 +4,7 @@ from flask import Flask, Response, make_response, redirect, render_template, req
 
 import exchange_translation
 from process_chat import process_chat
-from session_interface import all_sessions, clear_session as session_clear
+from session_interface import all_logged_convos, all_sessions, clear_session as session_clear, get_log
 from storage import Cookies, Secrets
 
 app = Flask(__name__)
@@ -119,6 +119,21 @@ def clear_session():
     if to_delete is not None:
         session_clear(to_delete)
     return redirect(url_for('sessions'))
+
+
+@app.route('/logs', methods=['GET'])
+@authenticated
+def all_logs():
+    return render_template('all_logs.html', logs=all_logged_convos())
+
+
+@app.route('/viewlog', methods=['GET'])
+@authenticated
+def view_log():
+    to_view = request.values.get('log')
+    if to_view:
+        return render_template('view_log.html', name=to_view, log=get_log(to_view))
+    return redirect(url_for('all_logs'))
 
 
 @app.route('/login', methods=['GET'])

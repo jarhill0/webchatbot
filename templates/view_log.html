@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Viewing {{ name }}</title>
+</head>
+<body>
+{% include "header.html" %}
+<h1>Viewing {{ name }}</h1>
+<table>
+    {% for message, is_from_user, timestamp in log %}
+        <tr>
+            <td style="float: right;">{{ 'User' if is_from_user else 'Bot' }} [{{ timestamp }}]:</td>
+            <td>{{ message }}</td>
+        </tr>
+    {% endfor %}
+</table>
+</body>
+</html>

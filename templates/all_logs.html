@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Logs</title>
+</head>
+<body>
+{% include "header.html" %}
+<h1>Logs</h1>
+
+<ul>
+    {% for name in logs %}
+        <li><a href="{{ url_for('view_log', log=name) }}">{{ name }}</a></li>
+    {% endfor %}
+</ul>
+</body>
+</html>
