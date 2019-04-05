@@ -10,7 +10,8 @@
 <table>
     {% for message, is_from_user, timestamp in log %}
         <tr>
-            <td style="float: right;">{{ 'User' if is_from_user else 'Bot' }} [{{ timestamp }}]:</td>
+            <td>[{{ timestamp }}]</td>
+            <td style="float: right;"><b>{{ 'User' if is_from_user else 'Bot' }}</b>:</td>
             <td>{{ message }}</td>
         </tr>
     {% endfor %}
