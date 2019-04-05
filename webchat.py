@@ -1,6 +1,7 @@
 from functools import wraps
 
 from flask import Flask, Response, make_response, redirect, render_template, request, url_for
+from twilio.twiml.messaging_response import MessagingResponse
 
 import exchange_translation
 from process_chat import process_chat
@@ -176,6 +177,22 @@ def log_out():
 @app.route('/')
 def redirect_root():
     return redirect(url_for('exchanges'))
+
+
+@app.route("/twilio_sms", methods=['GET', 'POST'])
+def sms_ahoy_reply():
+    """Respond to Twilio SMS."""
+    session = request.values.get('From')
+    message = request.values.get('Body', '')
+
+    if session is None:
+        return Response(status=400, response='Error. No phone number.')
+
+    response = process_chat(session, message)
+    tw_resp = MessagingResponse()
+    if response is not None:
+        tw_resp.message(response)
+    return str(tw_resp)
 
 
 if __name__ == '__main__':
