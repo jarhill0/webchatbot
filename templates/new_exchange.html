@@ -25,6 +25,7 @@
             if ({{ 'true' if current_exchange is not defined else 'false' }})
                 for (let i = 0; i < 3; i++)
                     addRow();
+            configureType();
         }
 
         function addRow() {
@@ -81,6 +82,33 @@
 
             return row;
         }
+
+        function configureType() {
+            const type = document.getElementById("exchange-type-select");
+            // from https://stackoverflow.com/a/15987166
+            const selectedItemName = type.options[type.selectedIndex].value;
+
+            switch (selectedItemName) {
+                case "name":
+                    configureNameType();
+                    break;
+                case "":
+                    configureCustomType();
+                    break;
+            }
+        }
+
+        function configureNameType() {
+            document.getElementById("keywords-wrapper").style.display = "none";
+            document.getElementById("exchange-default-label").style.display = "none";
+            document.getElementById("namestuff-wrapper").style.display = "block";
+        }
+
+        function configureCustomType() {
+            document.getElementById("keywords-wrapper").style.display = "block";
+            document.getElementById("exchange-default-label").style.display = "block";
+            document.getElementById("namestuff-wrapper").style.display = "none";
+        }
     </script>
 
     <style>
@@ -120,12 +148,28 @@
     </label>
     <br>
     <label>
+        Type
+        <select name="exchange-type" id="exchange-type-select" onchange="configureType()">
+            {% if current_exchange is defined %}
+                {% set curr_exch_type = exchange_type(current_exchange) %}
+            {% endif %}
+            <option value="">Custom</option>
+            <option value="name"
+                    {% if curr_exch_type is defined and curr_exch_type == "name" %}
+                    selected
+                    {% endif %}
+            >Name
+            </option>
+        </select>
+    </label>
+    <br>
+    <label>
         Prompt
         <textarea name="exchange-prompt" rows="6"
                   cols="30">{{ prompt(current_exchange) if current_exchange is defined }}</textarea>
     </label>
     <br>
-    <label>
+    <label id="exchange-default-label">
         Default successor interaction (optional)
         <input type="text" name="exchange-default"
                 {% if current_exchange is defined %}
@@ -135,25 +179,46 @@
         >
     </label>
     <br>
-    <div id="keywords">
-        {% if current_exchange is defined %}
-            {% for keyword, exchange in keyword_dict.items() %}
-                <div>
-                    <label>Keyword {{ loop.index }}
-                        <input type="text" name="keyword"
-                               value="{{ keyword }}">
-                    </label>
-                    <label>
-                        Destination exchange <input type="text" name="exchange"
-                                                    value="{{ exchange }}">
-                    </label>
-                </div>
-            {% endfor %}
-        {% endif %}
+    <div id="keywords-wrapper">
+        <div id="keywords">
+            {% if current_exchange is defined %}
+                {% for keyword, exchange in keyword_dict.items() %}
+                    <div>
+                        <label>Keyword {{ loop.index }}
+                            <input type="text" name="keyword"
+                                   value="{{ keyword }}">
+                        </label>
+                        <label>
+                            Destination exchange <input type="text" name="exchange"
+                                                        value="{{ exchange }}">
+                        </label>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <br>
+        <input type="button" onclick="addRow()" title="add row" value="+">
+        <input type="button" onclick="removeRow()" title="remove row" value="-">
     </div>
-    <br>
-    <input type="button" onclick="addRow()" title="add row" value="+">
-    <input type="button" onclick="removeRow()" title="remove row" value="-">
+    <div id="namestuff-wrapper" style="display: none;">
+        <label>
+            Exchange if name found:
+            <input type="text" name="yes_name"
+                    {% if current_exchange is defined %}
+                   value="{{ keyword_dict.get('yes_name', '') }}"
+                    {% endif %}
+            >
+        </label>
+        <br>
+        <label>
+            Exchange if no name is found:
+            <input type="text" name="no_name"
+                    {% if current_exchange is defined %}
+                   value="{{ keyword_dict.get('no_name', '') }}"
+                    {% endif %}
+            >
+        </label>
+    </div>
     <br>
     <button>Submit</button>
 </form>

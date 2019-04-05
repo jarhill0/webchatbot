@@ -38,7 +38,8 @@ def edit_exchange():
                            keywords=exchange_translation.keywords,
                            prompt=exchange_translation.prompt,
                            default=exchange_translation.default,
-                           rank=exchange_translation.rank)
+                           rank=exchange_translation.rank,
+                           exchange_type=exchange_translation.exchange_type)
 
 
 @app.route('/new_exchange', methods=['POST'])
@@ -49,15 +50,20 @@ def new_exchange_post():
     prompt = request.values.get('exchange-prompt', '')
     default = request.values.get('exchange-default', None)
     rank = request.values.get('exchange-rank', None)
+    type_ = request.values.get('exchange-type', None)
     keywords = request.values.getlist('keyword')
     target_exchanges = request.values.getlist('exchange')
-    keyword_map = {keyword.lower(): exchange
-                   for keyword, exchange in zip(keywords, target_exchanges)
-                   if keyword and exchange}
+    if type_ == 'name':
+        keyword_map = {'yes_name': request.values.get('yes_name', ''),
+                       'no_name': request.values.get('no_name', '')}
+    else:
+        keyword_map = {keyword.lower(): exchange
+                       for keyword, exchange in zip(keywords, target_exchanges)
+                       if keyword and exchange}
 
     if existing:
         exchange_translation.delete(existing)
-    exchange_translation.save_to_disk(name, prompt, keyword_map, default, rank)
+    exchange_translation.save_to_disk(name, prompt, keyword_map, default, rank, type_)
     return redirect(url_for('exchanges'))
 
 

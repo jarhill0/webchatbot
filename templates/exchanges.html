@@ -19,11 +19,14 @@ always be initiated by the user.
     </a>
 </p>
 
-{% for name, prompt, default in exchanges %}
+{% for name, prompt, default, type_ in exchanges %}
     <div>
         <a id="{{ name }}">
             <b>Name</b>: <code>{{ name }}</code>
         </a>
+        {% if type_ %}
+            <br><b>Special type</b>: {{ type_ }}
+        {% endif %}
         <br><b>Prompt</b>: {{ prompt }}
         {% if default %}
             <br><b>Default successor</b>: <a href="#{{ default }}">
