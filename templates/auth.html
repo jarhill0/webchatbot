@@ -9,7 +9,7 @@
 
 Enter the password to continue.
 
-<form action="{{ url_for('authenticate') }}" method="post">
+<form action="{{ url_for('authenticate', dest=dest) }}" method="post">
     <label>
         Password
         <input name="password" type="password">

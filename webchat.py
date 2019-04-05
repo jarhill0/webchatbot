@@ -111,7 +111,7 @@ def log_in():
         return redirect(request.values.get('dest') or url_for('redirect_root'))
 
     COOKIES.prune()
-    return render_template('auth.html')
+    return render_template('auth.html', dest=request.values.get('dest', ''))
 
 
 @app.route('/login', methods=['POST'])
@@ -124,7 +124,7 @@ def authenticate():
         resp.set_cookie('auth', COOKIES.new())
         return resp
     else:
-        return render_template('auth.html', error='Incorrect password.')
+        return render_template('auth.html', error='Incorrect password.', dest=request.values.get('dest', ''))
 
 
 @app.route('/logout', methods=['POST'])
