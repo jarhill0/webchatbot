@@ -15,7 +15,8 @@ def process_chat(session, message):
     """
     log(session=session, message=message, is_from_user=True)
     response = process_chat_real(session, message)
-    log(session=session, message=response, is_from_user=False)
+    if response is not None:
+        log(session=session, message=response, is_from_user=False)
     return response
 
 
