@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sessions</title>
+</head>
+<body>
+{% include "header.html" %}
+<h1>Sessions</h1>
+
+<ol>
+    {% for session_id, exchange, data in sessions %}
+        <li>{{ session_id }}: <i>{{ exchange }}</i>
+            {% if data %}
+                <ul>
+                    {% for key, value in data.items() %}
+                        <li>{{ key }}: {{ value }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ol>
+</body>
+</html>

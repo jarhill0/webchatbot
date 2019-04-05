@@ -4,6 +4,7 @@ from flask import Flask, Response, make_response, redirect, render_template, req
 
 import exchange_translation
 from process_chat import process_chat
+from session_interface import all_sessions
 from storage import Cookies, Secrets
 
 app = Flask(__name__)
@@ -103,6 +104,12 @@ def get_chat_message():
     if response is None:
         return '[silence]'
     return response
+
+
+@app.route('/sessions', methods=['GET'])
+@authenticated
+def sessions():
+    return render_template('sessions.html', sessions=all_sessions())
 
 
 @app.route('/login', methods=['GET'])

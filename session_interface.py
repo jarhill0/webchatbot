@@ -10,7 +10,7 @@ def all_sessions():
 
     :returns: a 2-tuple of (session_id, current_exchange, data) where data is guaranteed to be a dict.
     """
-    for session_id, curr_exchange, data in iter(SESSIONS):
+    for session_id, curr_exchange, data in SESSIONS:
         if data is None:
             data = {}
         else:
