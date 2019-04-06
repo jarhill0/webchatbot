@@ -115,7 +115,7 @@ def get_chat_message():
 
     response = process_chat(session, message)
     if response is None:
-        return '[silence]'
+        return ''
     return response
 
 

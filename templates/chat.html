@@ -30,9 +30,11 @@
         function appendResponse(response) {
             const chatLog = document.getElementById("chatLog");
             const botP = document.createElement("p");
-            botP.innerText = "Bot: " + response;
-            chatLog.appendChild(botP);
-            chatLog.scrollTop = chatLog.scrollHeight;  // scroll to bottom
+            if (response) {
+                botP.innerText = "Bot: " + response;
+                chatLog.appendChild(botP);
+                chatLog.scrollTop = chatLog.scrollHeight;  // scroll to bottom
+            }
         }
 
         function getResponse(message) {
