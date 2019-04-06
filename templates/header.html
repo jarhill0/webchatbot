@@ -2,6 +2,7 @@
 <a href="{{ url_for('sessions') }}">Sessions</a>
 <a href="{{ url_for('all_logs') }}">Chat Logs</a>
 <a href="{{ url_for('chat') }}">Chat</a>
+<a href="{{ url_for('images') }}">Images</a>
 <a href="javascript:" onclick="document.getElementById('logOutForm').submit()">Log out</a>
 
 <form action="{{ url_for('log_out') }}" method="post" id="logOutForm"></form>

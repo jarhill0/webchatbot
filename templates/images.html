@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Images</title>
+</head>
+<body>
+{% include "header.html" %}
+
+<h1>Images</h1>
+
+<h3>Upload new</h3>
+<form action="{{ url_for('upload_image') }}" enctype="multipart/form-data" method="post">
+    <label>
+        name
+        <input type="text" name="image_name">
+    </label>
+    <br>
+    <input name="image" type="file" required>
+    <br>
+    <input type="submit" value="Upload">
+</form>
+
+{% if error %}
+    <br><b>Error: {{ error }}</b>
+{% endif %}
+
+{% if success %}
+    <br>{{ success }}
+{% endif %}
+
+<h3>Uploaded images</h3>
+<ul>
+    {% for image in images %}
+        <li>
+            <a href="{{ url_for('image', name=image) }}">{{ image }}</a>
+            <form action="{{ url_for('delete_image') }}" method="post">
+                <input type="text" name="image" value="{{ image }}" hidden>
+                <button>Delete {{ image }}</button>
+            </form>
+        </li>
+        <br>
+    {% endfor %}
+</ul>
+</body>
+</html>

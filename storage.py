@@ -146,6 +146,60 @@ class Cookies(Storage):
         self._remove('cookie', cookie)
 
 
+class Images(Storage):
+    """Class to store image blobs."""
+    TABLE_NAME = 'images'
+    TABLE_SCHEMA = 'img_name TEXT PRIMARY KEY NOT NULL, image BLOB NOT NULL, mimetype TEXT NOT NULL'
+
+    def __getitem__(self, name):
+        """Get an image.
+
+        :param name: The name of the image.
+        :returns: A tuple containing (The image, as bytes; the mimetype, as str)
+        """
+        cursor = self.connection().cursor()
+        result = cursor.execute('SELECT image, mimetype FROM {} WHERE img_name=?'.format(self.TABLE_NAME),
+                                (name,)).fetchone()
+        if result is None:
+            raise KeyError('No known image called {!r}.'.format(name))
+        return result
+
+    def __iter__(self):
+        """Iterate over all known images, returning their names."""
+        return self._iterate_column('img_name')
+
+    def set(self, name, image, mimetype):
+        """Save an image.
+
+        :param name: The name of the image.
+        :param image: The image, as bytes.
+        :param mimetype: The mimetype of the image.
+        """
+        conn = self.connection()
+        cursor = conn.cursor()
+        cursor.execute('REPLACE INTO {} VALUES (?, ?, ?)'.format(self.TABLE_NAME), (name, image, mimetype))
+        conn.commit()
+
+    def get(self, name, default=(None, None)):
+        """Get an image or return a default value.
+
+        :param name: The name of the image.
+        :param default: What to return if the image isn't found (default: (None, None))
+        :returns: A tuple containing (The image, as bytes; the mimetype, as str), or the default.
+        """
+        try:
+            return self[name]
+        except KeyError:
+            return default
+
+    def remove(self, name):
+        """Remove an image.
+
+        :param name: The name of the image.
+        """
+        self._remove('img_name', name)
+
+
 class Prompts(Storage):
     """Class to store the prompts and defaults of Exchanges."""
     TABLE_NAME = 'prompts'

@@ -1,17 +1,22 @@
 from functools import wraps
+from re import compile, finditer
 
 from flask import Flask, Response, make_response, redirect, render_template, request, url_for
-from twilio.twiml.messaging_response import MessagingResponse
+from twilio.twiml.messaging_response import Message, MessagingResponse
+from werkzeug.datastructures import Headers
 
 import exchange_translation
 from process_chat import process_chat
 from session_interface import all_logged_convos, all_sessions, clear_session as session_clear, get_log
-from storage import Cookies, Secrets
+from storage import Cookies, Images, Secrets
 
 app = Flask(__name__)
 
 COOKIES = Cookies()
 SECRETS = Secrets()
+IMAGES = Images()
+
+IMG_REGEX = compile(r'IMAGE\(([^)]+)\)')
 
 
 def remove_prefix(string, prefix):
@@ -179,7 +184,7 @@ def redirect_root():
     return redirect(url_for('exchanges'))
 
 
-@app.route("/twilio_sms", methods=['GET', 'POST'])
+@app.route('/twilio_sms', methods=['GET', 'POST'])
 def sms_ahoy_reply():
     """Respond to Twilio SMS."""
     session = request.values.get('From')
@@ -188,11 +193,92 @@ def sms_ahoy_reply():
     if session is None:
         return Response(status=400, response='Error. No phone number.')
 
-    response = process_chat(session, message)
-    tw_resp = MessagingResponse()
-    if response is not None:
-        tw_resp.message(response)
-    return str(tw_resp)
+    bot_response = process_chat(session, message)
+
+    return str(convert_to_twilio(bot_response))
+
+
+def convert_to_twilio(text_message):
+    """Convert a message to a Twilio MessagingResponse by doing image substitution.
+
+    :param text_message: The message, as text, where IMAGE(name.png) represents the image name.png.
+    :returns A MessagingResponse.
+    """
+    resp = MessagingResponse()
+    if text_message is None:
+        return resp
+    twilio_message = Message()
+    start_ind = 0
+    for match in finditer(IMG_REGEX, text_message):
+        match_start, match_end = match.span()
+        twilio_message.body(text_message[start_ind:match_start].strip())
+        twilio_message.media(url_for('image', name=match.group(1)))
+        start_ind = match_end
+    twilio_message.body(text_message[start_ind:])
+    resp.append(twilio_message)
+    return resp
+
+
+@app.route('/image', methods=['GET'])
+def image():
+    """Get an image."""
+    name = request.values.get('name')
+    if not name:
+        return Response(status=400, response='Error. No image name provided.')
+    img_blob, img_mime = IMAGES.get(name)
+    if not img_blob:
+        return Response(status=400, response='Error. Unknown image {!r}.'.format(name))
+    headers = Headers()
+    headers.add('Content-Disposition', 'inline', filename=name)
+    return Response(img_blob, mimetype=img_mime, headers=headers)
+
+
+@app.route('/images', methods=['GET'])
+@authenticated
+def images():
+    """View and edit images."""
+    return render_template('images.html', images=IMAGES, success=request.values.get('success'),
+                           error=request.values.get('error'))
+
+
+def message_dict(**kwargs):
+    """Make a dict containing only keys with truthy corresponding values."""
+    return {k: v for k, v in kwargs.items() if v}
+
+
+@app.route('/upload_img', methods=['POST'])
+@authenticated
+def upload_image():
+    success, error = process_image()
+    return redirect(url_for('images', **message_dict(success=success, error=error)))
+
+
+@app.route('/del_img', methods=['POST'])
+@authenticated
+def delete_image():
+    to_delete = request.values.get('image')
+    if to_delete:
+        IMAGES.remove(to_delete)
+    return redirect(url_for('images', success='Deleted {!r}.'.format(to_delete)))
+
+
+def process_image():
+    """Process an uploaded image.
+
+    :returns: (success, error)
+    """
+    if 'image' not in request.files:
+        return '', 'No file provided.'
+    image_file = request.files['image']
+    if not image_file.filename:
+        return '', 'Empty file.'
+    mimetype = image_file.content_type
+    if not mimetype.lower().split('/')[0] == 'image':
+        return '', 'Not an image.'
+    img_blob = image_file.read()
+    img_name = request.values.get('image_name') or image_file.filename
+    IMAGES.set(name=img_name, image=img_blob, mimetype=mimetype)
+    return 'Successfully uploaded image {!r}.'.format(img_name), ''
 
 
 if __name__ == '__main__':
