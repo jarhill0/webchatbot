@@ -165,7 +165,7 @@ def authenticate():
 
     if request.values.get('password', '') == SECRETS['password']:
         resp = make_response(redirect(request.values.get('dest') or url_for('redirect_root')))
-        resp.set_cookie('auth', COOKIES.new())
+        resp.set_cookie('auth', value=COOKIES.new(), max_age=int(COOKIES.VALID_LENGTH.total_seconds()))
         return resp
     else:
         return render_template('auth.html', error='Incorrect password.', dest=request.values.get('dest', ''))
