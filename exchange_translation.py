@@ -28,6 +28,20 @@ def delete(exchange_name):
     KEYWORDS.delete(exchange_name)
 
 
+def duplicate(old_name, new_name):
+    """Duplicate an Exchange.
+
+    :param old_name: The name of the Exchange to duplicate.
+    :param new_name: The name of the copy.
+    """
+    save_to_disk(exchange_name=new_name,
+                 prompt_=prompt(old_name),
+                 keyword_map=keywords(old_name),
+                 default_=default(old_name),
+                 rank_=rank(old_name),
+                 type_=exchange_type(old_name))
+
+
 def exchange_type(exchange_name):
     """Get the type of an Exchange.
 

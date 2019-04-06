@@ -98,6 +98,16 @@ def delete_exchange():
     return redirect(url_for('exchanges'))
 
 
+@app.route('/duplicate_exchange', methods=['POST'])
+@authenticated
+def duplicate_exchange():
+    old_name = request.values.get('old_name')
+    new_name = request.values.get('new_name')
+    if old_name and new_name:
+        exchange_translation.duplicate(old_name, new_name)
+    return redirect(url_for('exchanges'))
+
+
 @app.route('/chat', methods=['GET'])
 @authenticated
 def chat():
