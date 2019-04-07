@@ -71,7 +71,7 @@ def new_exchange_post():
         keyword_map = {'yes_name': request.values.get('yes_name', ''),
                        'no_name': request.values.get('no_name', '')}
     else:
-        keyword_map = {keyword.lower(): exchange
+        keyword_map = {keyword.lower().strip(): exchange
                        for keyword, exchange in zip(keywords, target_exchanges)
                        if keyword and exchange}
 
