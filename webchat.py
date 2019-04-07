@@ -210,7 +210,7 @@ def sms_reply():
         if not url:
             break
         media.append(url)
-    message = ' '.join('IMAGE({})'.format(url) for url in media) + message
+    message = ' '.join('USER_IMAGE: {}'.format(url) for url in media) + message
 
     bot_response = process_chat(session, message)
 
