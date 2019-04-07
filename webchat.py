@@ -195,13 +195,22 @@ def redirect_root():
 
 
 @app.route('/twilio_sms', methods=['GET', 'POST'])
-def sms_ahoy_reply():
+def sms_reply():
     """Respond to Twilio SMS."""
     session = request.values.get('From')
     message = request.values.get('Body', '')
 
     if session is None:
         return Response(status=400, response='Error. No phone number.')
+
+    media = []
+    for i in range(10):
+        media_key = 'MediaUrl{}'.format(i)
+        url = request.values.get(media_key)
+        if not url:
+            break
+        media.append(url)
+    message = ' '.join('IMAGE({})'.format(url) for url in media) + message
 
     bot_response = process_chat(session, message)
 
