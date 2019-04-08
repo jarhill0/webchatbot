@@ -105,7 +105,7 @@ def duplicate_exchange():
     new_name = request.values.get('new_name')
     if old_name and new_name:
         exchange_translation.duplicate(old_name, new_name)
-    return redirect(url_for('exchanges'))
+    return redirect(url_for('edit_exchange', exchange=new_name))
 
 
 @app.route('/chat', methods=['GET'])
