@@ -203,12 +203,11 @@ def sms_reply():
     if session is None:
         return Response(status=400, response='Error. No phone number.')
 
+    num_media = int(request.values.get('NumMedia', 0))
     media = []
-    for i in range(10):
+    for i in range(num_media):
         media_key = 'MediaUrl{}'.format(i)
         url = request.values.get(media_key)
-        if not url:
-            break
         media.append(url)
     message = ' '.join('USER_IMAGE: {}'.format(url) for url in media) + message
 
