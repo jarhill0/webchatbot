@@ -224,7 +224,7 @@ def convert_to_twilio(text_message):
     :returns A MessagingResponse.
     """
     resp = MessagingResponse()
-    if text_message is None:
+    if not text_message:
         return resp
     twilio_message = Message()
     start_ind = 0
