@@ -41,7 +41,7 @@ def authenticated(route):
 @app.route('/new_exchange', methods=['GET'])
 @authenticated
 def new_exchange():
-    return render_template('new_exchange.html')
+    return render_template('new_exchange.html', name=request.values.get('name'))
 
 
 @app.route('/edit_exchange', methods=['GET'])
@@ -84,9 +84,12 @@ def new_exchange_post():
 @app.route('/exchanges', methods=['GET'])
 @authenticated
 def exchanges():
+    all_exchanges = tuple(exchange_translation.all_exchanges())
+    exch_names = set(exch[0] for exch in all_exchanges)
     return render_template('exchanges.html',
-                           exchanges=exchange_translation.all_exchanges(),
-                           keywords=exchange_translation.keywords)
+                           exchanges=all_exchanges,
+                           keywords=exchange_translation.keywords,
+                           exch_names=exch_names)
 
 
 @app.route('/delete_exchange', methods=['POST'])

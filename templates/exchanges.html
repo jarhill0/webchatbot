@@ -29,6 +29,12 @@
         }
 
     </script>
+
+    <style>
+        .nonexistant {
+            color: red;
+        }
+    </style>
 </head>
 <body>
 {% include "header.html" %}
@@ -63,7 +69,15 @@ always be initiated by the user.
             <br><b>Keywords</b>:
             <ul>
                 {% for keyword, successor in kw_dict.items() %}
-                    <li><i>{{ keyword }}</i>: <a href="#{{ successor }}">
+                    <li><i>{{ keyword }}</i>: <a
+                            {% if successor not in exch_names %}
+                                class="nonexistant"
+                                href="{{ url_for('new_exchange', name=successor) }}"
+                            {% else %}
+                                href="#{{ successor }}"
+                            {% endif %}
+
+                    >
                         <code>{{ successor }}</code></a>
                     </li>
                 {% endfor %}

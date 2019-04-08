@@ -134,6 +134,8 @@
         <input type="text" name="exchange-name"
                 {% if current_exchange is defined %}
                value="{{ current_exchange }}"
+                {% elif name %}
+               value="{{ name }}"
                 {% endif %}
         >
     </label>
