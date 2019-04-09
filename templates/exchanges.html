@@ -61,7 +61,14 @@ always be initiated by the user.
         {% endif %}
         <br><b>Prompt</b>: {{ prompt }}
         {% if default %}
-            <br><b>Default successor</b>: <a href="#{{ default }}">
+            <br><b>Default successor</b>: <a
+                {% if default not in exch_names %}
+                    class="nonexistant"
+                    href="{{ url_for('new_exchange', name=default) }}"
+                {% else %}
+                    href="#{{ default }}"
+                {% endif %}
+        >
             <code>{{ default }}</code></a>
         {% endif %}
         {% set kw_dict = keywords(name) %}
