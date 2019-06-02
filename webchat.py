@@ -59,7 +59,7 @@ def edit_exchange():
 @app.route('/new_exchange', methods=['POST'])
 @authenticated
 def new_exchange_post():
-    name = request.values.get('exchange-name', '')
+    name = request.values.get('exchange-name', '').strip()
     existing = request.values.get('existing')
     prompt = request.values.get('exchange-prompt', '')
     default = request.values.get('exchange-default', None)
@@ -68,10 +68,10 @@ def new_exchange_post():
     keywords = request.values.getlist('keyword')
     target_exchanges = request.values.getlist('exchange')
     if type_ == 'name':
-        keyword_map = {'yes_name': request.values.get('yes_name', ''),
-                       'no_name': request.values.get('no_name', '')}
+        keyword_map = {'yes_name': request.values.get('yes_name', '').strip(),
+                       'no_name': request.values.get('no_name', '').strip()}
     else:
-        keyword_map = {keyword.lower().strip(): exchange
+        keyword_map = {keyword.lower().strip(): exchange.strip()
                        for keyword, exchange in zip(keywords, target_exchanges)
                        if keyword and exchange}
 
