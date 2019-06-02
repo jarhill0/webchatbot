@@ -24,6 +24,7 @@ def process_chat_real(session, message):
     curr_exchange, data = get_session(session)  # guarantees data to be a dict
     if curr_exchange is None:
         curr_exchange = 'start'
+        set_session(session, 'start', data)
 
     exch_type = exchange_type(curr_exchange)
     try:
