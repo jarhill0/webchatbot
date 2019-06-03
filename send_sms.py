@@ -4,14 +4,16 @@ from twilio.rest import Client
 
 from storage import Secrets
 
-account_sid = environ.get('TWILIO_ACCOUNT_SID')
-auth_token = environ.get('TWILIO_ACCOUNT_AUTH')
-if not (account_sid and auth_token):
-    raise Exception('Could not access Twilio authentication.')
-TWILIO = Client(account_sid, auth_token)
-
 SECRETS = Secrets()
-PHONE_NUM = SECRETS['phone_number']
+
+try:
+    PHONE_NUM = SECRETS['phone_number']
+    ACCOUNT_SID = SECRETS['account_sid']
+    AUTH_TOKEN = SECRETS['auth_token']
+except KeyError:
+    raise Exception('Could not access Twilio authentication. Configure it with twilio_auth.py.')
+
+TWILIO = Client(ACCOUNT_SID, AUTH_TOKEN)
 
 
 def send_sms(number, text):
