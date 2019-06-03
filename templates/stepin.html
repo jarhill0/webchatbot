@@ -35,7 +35,7 @@
                 for (const message of JSON.parse(response)) {
                     const newP = document.createElement("p");
                     chatLog.appendChild(newP);
-                    newP.innerText = (message[1] ? "User:" : "Bot:") + " "+  message[0];
+                    newP.innerText = (message[1] ? "User:" : "Bot:") + " " + message[0];
                 }
                 chatLog.scrollTop = chatLog.scrollHeight;
             } else {
@@ -52,13 +52,10 @@
         }
 
         function confirmMessage(success, message) {
-            const chatLog = document.getElementById("chatLog");
-            const botP = document.createElement("p");
-            chatLog.appendChild(botP);
-            if (success) {
-                botP.innerText = "Bot: " + message;
-                chatLog.scrollTop = chatLog.scrollHeight;
-            } else {
+            if (!success) {
+                const chatLog = document.getElementById("chatLog");
+                const botP = document.createElement("p");
+                chatLog.appendChild(botP);
                 botP.innerText = "Error sending message."
             }
         }
