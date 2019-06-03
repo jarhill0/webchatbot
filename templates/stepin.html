@@ -7,6 +7,7 @@
     <script>
         const session = "{{ session_id }}";
         let lastPoll = new Date();
+        let lastPollSuceeded = true;
 
         window.onload = function () {
             document.getElementById("adminMessage").onkeydown = function (event) {
@@ -31,6 +32,7 @@
 
         function receivePoll(success, response) {
             if (success) {
+                lastPollSuceeded = true;
                 const chatLog = document.getElementById("chatLog");
                 for (const message of JSON.parse(response)) {
                     const newP = document.createElement("p");
@@ -39,7 +41,10 @@
                 }
                 chatLog.scrollTop = chatLog.scrollHeight;
             } else {
-                alert("Polling error!");
+                if (lastPollSuceeded) {
+                    alert("Polling error!");
+                    lastPollSuceeded = false;
+                }
             }
         }
 
