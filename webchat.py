@@ -1,5 +1,6 @@
 from functools import wraps
 from re import compile, finditer
+from urllib.parse import urlparse
 
 from flask import Flask, Response, make_response, redirect, render_template, request, url_for, jsonify
 from twilio.twiml.messaging_response import Message, MessagingResponse
@@ -8,7 +9,7 @@ from werkzeug.datastructures import Headers
 import exchange_translation
 from process_chat import process_chat
 from session_interface import all_logged_convos, all_sessions, clear_session as session_clear, get_log, get_session, \
-    set_session
+    set_session, log as make_log
 from storage import Cookies, Images, Secrets
 from send_sms import send_sms
 
@@ -183,12 +184,34 @@ def send_manual_message():
     message = body.get('message')
     if message is None or session is None:
         return 'Message and session must be provided!', 400
+    make_log(session=session, message=message, is_from_user=False)
     if session.startswith('+'):
-        send_sms(session, message)
+        p = urlparse(request.url)
+        absolute_base = '{}://{}'.format(p.scheme, p.netloc)
+        send_sms(session, **convert_to_twilio_outbound(message, absolute_base))
         return message
     else:
         pass  # TODO handle the web interface
         return ''
+
+
+def convert_to_twilio_outbound(text_message, url_base):
+    """Convert a message to a Twilio outbound message by doing image substitution.
+
+    :param text_message: The message, as text, where IMAGE(name.png) represents the image name.png.
+    :param url_base: The base URL of this website.
+    :returns A dict to be used as kwargs and passed to Client.messages.create.
+    """
+    start_ind = 0
+    text_only = []
+    message_images = []
+    for match in finditer(IMG_REGEX, text_message):
+        match_start, match_end = match.span()
+        text_only.append(text_message[start_ind:match_start].strip())
+        message_images.append(url_base + url_for('image', name=match.group(1)))
+        start_ind = match_end
+    text_only.append(text_message[start_ind:])
+    return {'text': ' '.join(text_only), 'images': message_images}
 
 
 @app.route('/set_exchange', methods=['POST'])

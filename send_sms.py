@@ -16,10 +16,11 @@ except KeyError:
 TWILIO = Client(ACCOUNT_SID, AUTH_TOKEN)
 
 
-def send_sms(number, text):
+def send_sms(number, text, images):
     """Send an SMS message using Twilio.
 
     :param number: The phone number of the recipient.
     :param text: The contents of the message.
+    :param images: A list of image URLs.
     """
-    return TWILIO.messages.create(body=text, from_=PHONE_NUM, to=number)
+    return TWILIO.messages.create(body=text, media_url=images, from_=PHONE_NUM, to=number)
