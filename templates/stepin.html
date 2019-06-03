@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Step In</title>
+
+    <script>
+        const session = "{{ session_id }}";
+        let lastPoll = new Date();
+
+        window.onload = function () {
+            document.getElementById("adminMessage").onkeydown = function (event) {
+                if (event.code === "Enter") {
+                    updateChat();
+                }
+            };
+
+            poll();
+        };
+
+        function poll() {
+            httpAsync("{{ url_for('poll_for_stepin') }}",
+                {'session': session, 'since': lastPoll.getTime() / 1000},
+                receivePoll,
+                'GET');
+
+            window.setTimeout(poll, 5000);
+            lastPoll = new Date();
+        }
+
+
+        function receivePoll(success, response) {
+            if (success) {
+                const chatLog = document.getElementById("chatLog");
+                for (const message of JSON.parse(response)) {
+                    const newP = document.createElement("p");
+                    chatLog.appendChild(newP);
+                    newP.innerText = (message[1] ? "User:" : "Bot:") + " "+  message[0];
+                }
+                chatLog.scrollTop = chatLog.scrollHeight;
+            } else {
+                alert("Polling error!");
+            }
+        }
+
+        function updateChat() {
+            const adminMessage = document.getElementById("adminMessage");
+            const adminMessageContent = adminMessage.value;
+            adminMessage.value = "";
+
+            sendMessage(adminMessageContent);
+        }
+
+        function confirmMessage(success, message) {
+            const chatLog = document.getElementById("chatLog");
+            const botP = document.createElement("p");
+            chatLog.appendChild(botP);
+            if (success) {
+                botP.innerText = "Bot: " + message;
+                chatLog.scrollTop = chatLog.scrollHeight;
+            } else {
+                botP.innerText = "Error sending message."
+            }
+        }
+
+        function sendMessage(message) {
+            httpAsync("{{ url_for('send_manual_message') }}",
+                {'session': session, 'message': message},
+                confirmMessage);
+        }
+
+        function updateExchange() {
+            const newExchange = document.getElementById("currentExchange").value;
+            httpAsync("{{ url_for('manual_set_exchange') }}",
+                {'session': session, 'exchange': newExchange},
+                function (success, _) {
+                    if (!success) {
+                        alert("Error updating the exchange!");
+                    }
+                });
+        }
+
+        function deleteData(key) {
+            httpAsync("{{ url_for('manual_delete_key') }}",
+                {'session': session, 'key': key},
+                function (success, _) {
+                    if (success) {
+                        window.location.reload(true);
+                    } else {
+                        alert("Error deleting the data with key" + key + "!");
+                    }
+                });
+        }
+
+        function updateData() {
+            const dataList = document.getElementById('sessionData');
+            const newKeyEl = document.getElementById('newKey');
+            const newKey = newKeyEl.value;
+            const newValueEl = document.getElementById('newValue');
+            const newValue = newValueEl.value;
+            httpAsync("{{ url_for('manual_update_key') }}",
+                {'session': session, 'key': newKey, 'value': newValue},
+                function (success, _) {
+                    if (success) {
+                        const inputRow = document.getElementById("inputRow");
+                        const newLi = document.createElement('li');
+                        dataList.insertBefore(newLi, inputRow);
+                        const newSpan = document.createElement('span');
+                        newLi.appendChild(newSpan);
+                        newSpan.innerText = newKey + ": " + newValue;
+                        const newButton = document.createElement('button');
+                        newLi.appendChild(newButton);
+                        newButton.onclick = function () {
+                            deleteData(newKey)
+                        };
+                        newButton.innerText = "-";
+
+                        newKeyEl.value = "";
+                        newValueEl.value = "";
+                    } else {
+                        alert("Error deleting the data with key" + key + "!");
+                    }
+                });
+        }
+
+        // modified from https://stackoverflow.com/a/4033310/ and https://stackoverflow.com/a/38982661/
+        function httpAsync(url, body, callback, method = 'POST') {
+            const xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState === 4) {
+                    callback(xmlHttp.status === 200, xmlHttp.responseText);
+                }
+
+            };
+            if (method === 'GET') {
+                url += formatParams(body);
+            }
+            xmlHttp.open(method, url, true); // true for asynchronous
+            if (method === 'POST') {
+                xmlHttp.setRequestHeader('Content-Type', 'application/json');
+                xmlHttp.send(JSON.stringify(body));
+            } else if (method === 'GET') {
+                xmlHttp.send();
+            }
+        }
+
+        function formatParams(params) {
+            return "?" + Object
+                .keys(params)
+                .map(function (key) {
+                    return key + "=" + encodeURIComponent(params[key])
+                })
+                .join("&")
+        }
+    </script>
+    <style>
+        #chatLog {
+            position: absolute;
+            overflow-y: scroll;
+            width: 70%;
+            max-height: 50%;
+        }
+
+        #messageEntry {
+            position: absolute;
+            left: 5px;
+            bottom: 0;
+            height: 100px;
+        }
+    </style>
+</head>
+<body>
+{% include "header.html" %}
+<h1>{{ session_id }}</h1>
+<label>
+    Current exchange:
+    <input type="text" id="currentExchange" value="{{ exchange }}">
+    <button onclick="updateExchange()">Update</button>
+</label>
+<ul id="sessionData">
+    {% for key, value in session_data.items() %}
+        <li>{{ key }}: {{ value }}
+            <button onclick="deleteData('{{ key }}')">-</button>
+        </li>
+    {% endfor %}
+    <li id="inputRow">
+        <input type="text" id="newKey">: <input type="text" id="newValue">
+        <button onclick="updateData()">Update</button>
+    </li>
+</ul>
+<div id="chatLog">
+    {% for message, is_from_user, timestamp in log %}
+        <p>
+            <b>{{ 'User' if is_from_user else 'Bot' }}</b>: {{ message }}
+        </p>
+    {% endfor %}
+</div>
+<div id="messageEntry">
+    <label>Message
+        <input type="text" id="adminMessage" autofocus>
+    </label>
+    <button onclick="updateChat()">Send</button>
+</div>
+</body>
+</html>

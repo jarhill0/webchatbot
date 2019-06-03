@@ -21,6 +21,3 @@ def send_sms(number, text):
     :param text: The contents of the message.
     """
     return TWILIO.messages.create(body=text, from_=PHONE_NUM, to=number)
-
-
-

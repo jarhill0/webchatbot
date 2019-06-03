@@ -19,6 +19,10 @@
                     {% endfor %}
                 </ul>
             {% endif %}
+            <br>
+            <a href="{{ url_for('step_in', session=session_id) }}">
+                <button>Step In</button>
+            </a>
             <form action="{{ url_for('clear_session') }}" method="post">
                 <input type="text" name="session_id" value="{{ session_id }}" hidden>
                 <button>Clear {{ session_id }}</button>

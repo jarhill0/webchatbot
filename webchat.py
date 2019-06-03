@@ -1,14 +1,16 @@
 from functools import wraps
 from re import compile, finditer
 
-from flask import Flask, Response, make_response, redirect, render_template, request, url_for
+from flask import Flask, Response, make_response, redirect, render_template, request, url_for, jsonify
 from twilio.twiml.messaging_response import Message, MessagingResponse
 from werkzeug.datastructures import Headers
 
 import exchange_translation
 from process_chat import process_chat
-from session_interface import all_logged_convos, all_sessions, clear_session as session_clear, get_log
+from session_interface import all_logged_convos, all_sessions, clear_session as session_clear, get_log, get_session, \
+    set_session
 from storage import Cookies, Images, Secrets
+from send_sms import send_sms
 
 app = Flask(__name__)
 
@@ -160,6 +162,97 @@ def view_log():
     if to_view:
         return render_template('view_log.html', name=to_view, log=get_log(to_view))
     return redirect(url_for('all_logs'))
+
+
+@app.route('/stepin', methods=['GET'])
+@authenticated
+def step_in():
+    session_id = request.values.get('session')
+    if session_id:
+        exch, data = get_session(session_id)
+        return render_template('stepin.html', session_id=session_id, exchange=exch, session_data=data,
+                               log=get_log(session_id))
+    return redirect(url_for('sessions'))
+
+
+@app.route('/send_message', methods=['POST'])
+@authenticated
+def send_manual_message():
+    body = request.get_json()
+    session = body.get('session')
+    message = body.get('message')
+    if message is None or session is None:
+        return 'Message and session must be provided!', 400
+    if session.startswith('+'):
+        send_sms(session, message)
+        return message
+    else:
+        pass  # TODO handle the web interface
+        return ''
+
+
+@app.route('/set_exchange', methods=['POST'])
+@authenticated
+def manual_set_exchange():
+    body = request.get_json()
+    session_id = body.get('session')
+    new_exch = body.get('exchange')
+    if session_id is None or new_exch is None:
+        return 'Session and exchange must be provided!', 400
+    _, data = get_session(session_id)
+    set_session(session_id, new_exch, data)
+    return ''
+
+
+@app.route('/delete_key', methods=['POST'])
+@authenticated
+def manual_delete_key():
+    body = request.get_json()
+    session_id = body.get('session')
+    key = body.get('key')
+    if session_id is None or key is None:
+        return 'Session and key must be provided!', 400
+    exchange, data = get_session(session_id)
+    try:
+        del data[key]
+    except KeyError:
+        pass
+    set_session(session_id, exchange, data)
+    return ''
+
+
+@app.route('/update_key', methods=['POST'])
+@authenticated
+def manual_update_key():
+    body = request.get_json()
+    session_id = body.get('session')
+    key = body.get('key')
+    value = body.get('value')
+    if None in (session_id, key, value):
+        return 'Session, key and value must be provided!', 400
+    exchange, data = get_session(session_id)
+    data[key] = value
+    set_session(session_id, exchange, data)
+    return ''
+
+
+@app.route('/stepin_poll', methods=['GET'])
+@authenticated
+def poll_for_stepin():
+    session_id = request.values.get('session')
+    last_poll = request.values.get('since')
+    if session_id is None or last_poll is None:
+        return 'Session and last poll must be provided!', 400
+    try:
+        last_poll = float(last_poll)
+    except ValueError:
+        return 'Last Poll is not a valid epoch float!', 400
+
+    return jsonify(time_filter(get_log(session_id), last_poll))
+
+
+def time_filter(log, after):
+    return [items[:2] for items in log if items[2].timestamp() > after]  # filter by timestamp
 
 
 @app.route('/login', methods=['GET'])
