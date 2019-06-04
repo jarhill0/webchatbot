@@ -196,24 +196,26 @@
     Current exchange:
     <select id="currentExchange">
         {% for name, prompt, default, type_ in all_exchanges %}
-            <option value="{{ name }}" {{ 'selected' if name == exchange }}>{{ name }}</option>
+            <option value="{{ name }}" {{ 'selected' if name == exchange }}>
+                {{ name }}{{ ' (' + type_ + ')' if type_ }}</option>
         {% endfor %}
     </select>
-    {% if session_data.get('queued') %}
-        <br>
-        <label>
-            <input type="checkbox" id="deQueueBox" checked>
-            Remove from queue
-        </label>
-        <br>
-        <label>
-            <input type="checkbox" id="sendPromptBox" checked>
-            Send prompt
-        </label>
-        <br>
-    {% endif %}
-    <button onclick="updateExchange()">Update</button>
 </label>
+{% if session_data.get('queued') %}
+    <br>
+    <label>
+        <input type="checkbox" id="deQueueBox" checked>
+        Remove from queue
+    </label>
+    <br>
+    <label>
+        <input type="checkbox" id="sendPromptBox" checked>
+        Send prompt
+    </label>
+    <br>
+{% endif %}
+<button onclick="updateExchange()">Update</button>
+
 <ul id="sessionData">
     {% for key, value in session_data.items() %}
         <li>{{ key }}: {{ value }}
