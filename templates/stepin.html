@@ -76,11 +76,26 @@
 
         function updateExchange() {
             const newExchange = document.getElementById("currentExchange").value;
+            const data = {'session': session, 'exchange': newExchange};
+            let doRedirect = false;
+
+            const deQueueBox = document.getElementById('deQueueBox');
+            if (deQueueBox !== null) {
+                data['de_queue'] = deQueueBox.checked;
+                doRedirect = true;
+            }
+            const sendPromptBox = document.getElementById('sendPromptBox');
+            if (sendPromptBox !== null) {
+                data['send_prompt'] = sendPromptBox.checked;
+            }
             httpAsync("{{ url_for('manual_set_exchange') }}",
-                {'session': session, 'exchange': newExchange},
+                data,
                 function (success, _) {
                     if (!success) {
                         alert("Error updating the exchange!");
+                    }
+                    if (doRedirect) {
+                        window.location.href = "{{ url_for('sessions') }}";
                     }
                 });
         }
@@ -184,6 +199,19 @@
             <option value="{{ name }}" {{ 'selected' if name == exchange }}>{{ name }}</option>
         {% endfor %}
     </select>
+    {% if session_data.get('queued') %}
+        <br>
+        <label>
+            <input type="checkbox" id="deQueueBox" checked>
+            Remove from queue
+        </label>
+        <br>
+        <label>
+            <input type="checkbox" id="sendPromptBox" checked>
+            Send prompt
+        </label>
+        <br>
+    {% endif %}
     <button onclick="updateExchange()">Update</button>
 </label>
 <ul id="sessionData">

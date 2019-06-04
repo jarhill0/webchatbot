@@ -43,9 +43,13 @@ def process_chat_real(session, message):
 
     if new_exchange:
         set_session(session, new_exchange, data)
-        new_exch_type = exchange_type(new_exchange)
-        try:
-            return EXCHANGE_TYPES_PROMPT[new_exch_type](session)
-        except KeyError:
-            return prompt(new_exchange, data)
+        return get_prompt(session, new_exchange, data)
     return None
+
+
+def get_prompt(session, exchange, data):
+    type_ = exchange_type(exchange)
+    try:
+        return EXCHANGE_TYPES_PROMPT[type_](session)
+    except KeyError:
+        return prompt(exchange, data)

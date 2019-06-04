@@ -7,7 +7,7 @@ from twilio.twiml.messaging_response import Message, MessagingResponse
 from werkzeug.datastructures import Headers
 
 import exchange_translation
-from process_chat import process_chat
+from process_chat import process_chat, get_prompt
 from session_interface import all_logged_convos, all_sessions, clear_session as session_clear, get_log, get_session, \
     set_session, log as make_log
 from storage import Cookies, Images, Secrets
@@ -185,13 +185,17 @@ def send_manual_message():
     message = body.get('message')
     if message is None or session is None:
         return 'Message and session must be provided!', 400
+    return message
+
+
+def send_message(session, message):
+    if message is None:
+        return
     make_log(session=session, message=message, is_from_user=False)
     if session.startswith('+'):
         p = urlparse(request.url)
         absolute_base = '{}://{}'.format(p.scheme, p.netloc)
         send_sms(session, **convert_to_twilio_outbound(message, absolute_base))
-        return message
-    return ''  # web chat sources updates from the log
 
 
 def convert_to_twilio_outbound(text_message, url_base):
@@ -219,9 +223,16 @@ def manual_set_exchange():
     body = request.get_json()
     session_id = body.get('session')
     new_exch = body.get('exchange')
+    remove_queue = body.get('de_queue', False)
+    send_prompt = body.get('send_prompt', False)
     if session_id is None or new_exch is None:
         return 'Session and exchange must be provided!', 400
     _, data = get_session(session_id)
+    if remove_queue:
+        data['queued'] = False
+    if send_prompt:
+        prompt = get_prompt(session_id, new_exch, data)
+        send_message(session_id, prompt)
     set_session(session_id, new_exch, data)
     return ''
 
