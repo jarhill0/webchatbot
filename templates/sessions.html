@@ -53,9 +53,11 @@
             <a href="{{ url_for('step_in', session=session_id) }}">
                 <button>Step In</button>
             </a>
-            <form action="{{ url_for('clear_session') }}" method="post">
+            <form action="{{ url_for('clear_session') }}" method="post"
+                  onsubmit="return confirm('Do you really want to delete the session?\nThis will remove all data ' +
+                   'associated with the user, including name and current exchange.')">
                 <input type="text" name="session_id" value="{{ session_id }}" hidden>
-                <button>Clear {{ session_id }}</button>
+                <button>Delete {{ session_id }}</button>
             </form>
             <br>
         </li>
