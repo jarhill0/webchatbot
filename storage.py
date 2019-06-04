@@ -314,7 +314,7 @@ class Keywords(Storage):
 
         :param name: The name of the Exchange.
         :param keyword: The keyword.
-        :param desination: The destination Exchange if the keyword is matched.
+        :param destination: The destination Exchange if the keyword is matched.
         """
         self.set_many(name, {keyword: destination})
 
