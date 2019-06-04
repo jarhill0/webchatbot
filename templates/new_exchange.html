@@ -92,6 +92,9 @@
                 case "name":
                     configureNameType();
                     break;
+                case "queue":
+                    configureQueueType();
+                    break;
                 case "":
                     configureCustomType();
                     break;
@@ -102,6 +105,12 @@
             document.getElementById("keywords-wrapper").style.display = "none";
             document.getElementById("exchange-default-label").style.display = "none";
             document.getElementById("namestuff-wrapper").style.display = "block";
+        }
+
+        function configureQueueType() {
+            document.getElementById("keywords-wrapper").style.display = "none";
+            document.getElementById("exchange-default-label").style.display = "none";
+            document.getElementById("namestuff-wrapper").style.display = "none";
         }
 
         function configureCustomType() {
