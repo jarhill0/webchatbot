@@ -3,14 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <title>Sessions</title>
+
+    <script>
+        let queueToggleOn = false;
+        window.onload = function () {
+            updateQueueToggle();
+        };
+
+        function updateQueueToggle() {
+            queueToggleOn = document.getElementById("queueToggle").checked;
+            for (let thing of document.getElementsByClassName("unqueued")) {
+                if (queueToggleOn) {
+                    thing.classList.add("invisible");
+                } else {
+                    thing.classList.remove("invisible");
+                }
+            }
+
+        }
+    </script>
+    <style>
+        .invisible {
+            display: none;
+        }
+    </style>
 </head>
 <body>
 {% include "header.html" %}
 <h1>Sessions</h1>
 
+<label>
+    <input type="checkbox" id="queueToggle" onclick="updateQueueToggle()">
+    <b>See queued only</b>
+</label>
 <ol>
     {% for session_id, exchange, data in sessions %}
-        <li>
+        <li
+                class="{{ 'queued' if data and data.get('queued') else 'unqueued' }}"
+        >
             <a href="{{ url_for('view_log', log=session_id) }}">{{ session_id }}</a>: <i>{{ exchange }}</i>
             {% if data %}
                 <ul>

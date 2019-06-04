@@ -1,9 +1,10 @@
 from exchange_translation import default as default_func, exchange_type, keywords, prompt
 from name_exchange import name_exchange
+from queue_exchange import queue_exchange
 from session_interface import get_session, log, set_session
 from text_util import clean
 
-EXCHANGE_TYPES = {'name': name_exchange}
+EXCHANGE_TYPES = {'name': name_exchange, 'queue': queue_exchange}
 
 
 def process_chat(session, message):

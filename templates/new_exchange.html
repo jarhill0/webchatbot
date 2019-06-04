@@ -162,6 +162,12 @@
                     {% endif %}
             >Name
             </option>
+            <option value="queue"
+                    {% if curr_exch_type is defined and curr_exch_type == "queue" %}
+                    selected
+                    {% endif %}
+            >Queue
+            </option>
         </select>
     </label>
     <br>
