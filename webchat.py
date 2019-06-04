@@ -190,9 +190,7 @@ def send_manual_message():
         absolute_base = '{}://{}'.format(p.scheme, p.netloc)
         send_sms(session, **convert_to_twilio_outbound(message, absolute_base))
         return message
-    else:
-        pass  # TODO handle the web interface
-        return ''
+    return ''  # web chat sources updates from the log
 
 
 def convert_to_twilio_outbound(text_message, url_base):

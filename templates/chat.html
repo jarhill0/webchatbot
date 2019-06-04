@@ -6,16 +6,48 @@
 
     <script>
         const session = Math.random().toString(36).substring(7);
+        let lastPoll = new Date();
+        let lastPollSuceeded = true;
 
         window.onload = function () {
             document.getElementById("userMessage").onkeydown = function (event) {
                 if (event.code === "Enter") {
                     updateChat();
                 }
-            }
+            };
+            poll();
         };
 
-        function updateChat() { // TODO: poll for new manual messages
+        function poll() {
+            httpAsync("{{ url_for('poll_for_stepin') }}",
+                {'session': session, 'since': lastPoll.getTime() / 1000},
+                receivePoll,
+                'GET');
+
+            window.setTimeout(poll, 5000);
+            lastPoll = new Date();
+        }
+
+
+        function receivePoll(success, response) {
+            if (success) {
+                lastPollSuceeded = true;
+                const chatLog = document.getElementById("chatLog");
+                for (const message of JSON.parse(response)) {
+                    const newP = document.createElement("p");
+                    chatLog.appendChild(newP);
+                    newP.innerText = (message[1] ? "You:" : "Bot:") + " " + message[0];
+                }
+                chatLog.scrollTop = chatLog.scrollHeight;
+            } else {
+                if (lastPollSuceeded) {
+                    alert("Polling error!");
+                    lastPollSuceeded = false;
+                }
+            }
+        }
+
+        function updateChat() {
             const userMessage = document.getElementById("userMessage");
             const userMessageContent = userMessage.value;
             const chatLog = document.getElementById("chatLog");
@@ -35,6 +67,7 @@
                 chatLog.appendChild(botP);
                 chatLog.scrollTop = chatLog.scrollHeight;  // scroll to bottom
             }
+            lastPoll = new Date();
         }
 
         function getResponse(message) {
@@ -56,6 +89,35 @@
             xmlHttp.open("POST", url, true); // true for asynchronous
             xmlHttp.setRequestHeader('Content-Type', 'application/json');
             xmlHttp.send(JSON.stringify(body));
+        }
+
+        function httpAsync(url, body, callback, method = 'POST') {
+            const xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState === 4) {
+                    callback(xmlHttp.status === 200, xmlHttp.responseText);
+                }
+
+            };
+            if (method === 'GET') {
+                url += formatParams(body);
+            }
+            xmlHttp.open(method, url, true); // true for asynchronous
+            if (method === 'POST') {
+                xmlHttp.setRequestHeader('Content-Type', 'application/json');
+                xmlHttp.send(JSON.stringify(body));
+            } else if (method === 'GET') {
+                xmlHttp.send();
+            }
+        }
+
+        function formatParams(params) {
+            return "?" + Object
+                .keys(params)
+                .map(function (key) {
+                    return key + "=" + encodeURIComponent(params[key])
+                })
+                .join("&")
         }
     </script>
     <style>
