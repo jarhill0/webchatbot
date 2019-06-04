@@ -206,6 +206,11 @@ def new_session_post():
     keys = request.values.getlist('data-key')
     values = request.values.getlist('data-value')
     user_data = dict(zip(keys, values))
+    try:
+        if user_data[''] == '':  # we don't want that
+            del user_data['']
+    except KeyError:
+        pass
     set_session(phone_num, exchange, user_data)
     if send_prompt:
         prompt = get_prompt(phone_num, exchange, user_data)
