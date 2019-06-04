@@ -13,6 +13,7 @@ from session_interface import all_logged_convos, all_sessions, clear_session as 
     set_session, log as make_log
 from storage import Cookies, Images, Secrets
 from send_sms import send_sms
+import tangent_interface
 
 app = Flask(__name__)
 
@@ -467,6 +468,47 @@ def process_image():
     img_name = request.values.get('image_name') or image_file.filename
     IMAGES.set(name=img_name, image=img_blob, mimetype=mimetype)
     return 'Successfully uploaded image {!r}.'.format(img_name), ''
+
+
+@app.route('/tangents', methods=['GET'])
+@authenticated
+def tangents():
+    return render_template('tangents.html', all_tangents=tangent_interface.all_tangents)
+
+
+@app.route('/tangents/edit', methods=['GET'])
+@authenticated
+def edit_tangent():
+    id_ = request.values.get('id')
+    _, rank, tangent = tangent_interface.get_tangent(id_)
+    return render_template('edit_tangent.html', id_=id_, rank=rank, tangent=tangent)
+
+
+@app.route('/tangents/edit', methods=['POST'])
+@authenticated
+def edit_tangent_post():
+    rank = request.values.get('rank')
+    try:
+        rank = int(rank)
+    except ValueError:
+        return 'Rank is not a number!', 400
+    tangent = request.values.get('tangent')
+    id_ = request.values.get('id')
+    if tangent is None:
+        return 'Tangent must be provided!', 400
+    if not id_:
+        id_ = None
+    tangent_interface.set_tangent(rank, tangent, id_)
+    return redirect(url_for('tangents'))
+
+
+@app.route('/tangents/delete', methods=['POST'])
+@authenticated
+def delete_tangent():
+    id_ = request.values.get('id')
+    if id_:
+        tangent_interface.delete_tangent(id_)
+    return redirect(url_for('tangents'))
 
 
 if __name__ == '__main__':

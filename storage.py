@@ -282,6 +282,45 @@ class Prompts(Storage):
         conn.commit()
 
 
+class Tangents(Storage):
+    """Class to store a list of tangents."""
+    TABLE_NAME = 'tangents'
+    TABLE_SCHEMA = 'id INTEGER PRIMARY KEY NOT NULL, rank INTEGER NOT NULL, tangent TEXT NOT NULL'
+
+    def __iter__(self):
+        """Iterate over all tangents yielding (id, rank, tangent)."""
+        return self._iterate_columns('id', 'rank', 'tangent', order_by='ORDER BY rank ASC')
+
+    def delete(self, id_):
+        """Delete a tangent.
+
+        :param id_: The id of the tangent.
+        """
+        self._remove('id', id_)
+
+    def get(self, id_):
+        """Get a tangent's id, rank, and tangent.
+
+        :param id_: The id of the tangent.
+        :returns The id, rank, and tangent, as a tuple.
+        """
+        return self._get_row('id', id_, 'id', 'rank', 'tangent')
+
+    def set(self, rank, tangent, id_=None):
+        """Set a tangent.
+
+        :param rank: The rank of the tangent.
+        :param tangent: The text of the tangent.
+        :param id_: The id of a preexisting tangent to modify (default: None).
+        """
+        conn = self.connection()
+        cursor = conn.cursor()
+        cursor.execute('REPLACE INTO {} VALUES (?, ?, ?)'.format(
+            self.TABLE_NAME),
+            (id_, rank, tangent))
+        conn.commit()
+
+
 class Keywords(Storage):
     """Class to store the various keywords of Exchanges."""
     TABLE_NAME = 'keywords'

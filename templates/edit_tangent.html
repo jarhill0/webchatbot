@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ 'Edit Tangent' if id_ else 'New Tangent' }}</title>
+</head>
+<body>
+{% include "header.html" %}
+<h1>{{ 'Edit Tangent' if id_ else 'New Tangent' }}</h1>
+<form action="{{ url_for('edit_tangent_post') }}" method="post">
+    <input type="text" hidden name="id" value="{{ id_ if id_ }}">
+    <table>
+        <tr>
+            <td>
+                <label>
+                    Rank
+                    <input type="number" name="rank" value="{{ rank if rank }}">
+                </label>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label>
+                    Tangent
+                    <textarea name="tangent" rows="13" cols="40">{{ tangent if tangent }}</textarea>
+                </label>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button type="submit">Submit</button>
+            </td>
+        </tr>
+    </table>
+</form>
+{% if id_ %}
+    <br><br>
+    <form action="{{ url_for('delete_tangent') }}" method="post" onsubmit="return confirm('Are you sure you want ' +
+         'to delete this tangent?');">
+        <input name="id" value="{{ id_ }}" hidden>
+        <button type="submit">Delete this tangent</button>
+    </form>
+{% endif %}
+</body>
+</html>
