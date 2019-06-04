@@ -176,7 +176,11 @@
 <h1>{{ session_id }}</h1>
 <label>
     Current exchange:
-    <input type="text" id="currentExchange" value="{{ exchange }}">
+    <select id="currentExchange">
+        {% for name, prompt, default, type_ in all_exchanges %}
+            <option value="{{ name }}" {{ 'selected' if name == exchange }}>{{ name }}</option>
+        {% endfor %}
+    </select>
     <button onclick="updateExchange()">Update</button>
 </label>
 <ul id="sessionData">

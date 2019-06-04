@@ -171,8 +171,9 @@ def step_in():
     session_id = request.values.get('session')
     if session_id:
         exch, data = get_session(session_id)
+        all_exchanges = tuple(exchange_translation.all_exchanges())
         return render_template('stepin.html', session_id=session_id, exchange=exch, session_data=data,
-                               log=get_log(session_id))
+                               log=get_log(session_id), all_exchanges=all_exchanges)
     return redirect(url_for('sessions'))
 
 
