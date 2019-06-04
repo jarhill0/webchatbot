@@ -34,12 +34,15 @@
             if (success) {
                 lastPollSuceeded = true;
                 const chatLog = document.getElementById("chatLog");
+                let foundAny = false;
                 for (const message of JSON.parse(response)) {
                     const newP = document.createElement("p");
                     chatLog.appendChild(newP);
                     newP.innerText = (message[1] ? "User:" : "Bot:") + " " + message[0];
+                    foundAny = true;
                 }
-                chatLog.scrollTop = chatLog.scrollHeight;
+                if (foundAny)
+                    chatLog.scrollTop = chatLog.scrollHeight;
             } else {
                 if (lastPollSuceeded) {
                     alert("Polling error!");
