@@ -36,7 +36,10 @@ def process_chat_real(session, message):
 
     mapping = keywords(curr_exchange)
     new_exchange = default_func(curr_exchange)
-    for mess_word in clean(message).lower().split():
+    cleaned_words = clean(message).lower().split()
+    if '?' in message:
+        cleaned_words.append('question')
+    for mess_word in cleaned_words:
         if mess_word in mapping:
             new_exchange = mapping[mess_word]
             break
