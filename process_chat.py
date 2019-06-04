@@ -1,10 +1,11 @@
 from exchange_translation import default as default_func, exchange_type, keywords, prompt
 from name_exchange import name_exchange
-from queue_exchange import queue_exchange
+from queue_exchange import queue_exchange, queue_exchange_prompt
 from session_interface import get_session, log, set_session
 from text_util import clean
 
-EXCHANGE_TYPES = {'name': name_exchange, 'queue': queue_exchange}
+EXCHANGE_TYPES_NEXT = {'name': name_exchange, 'queue': queue_exchange}
+EXCHANGE_TYPES_PROMPT = {'queue': queue_exchange_prompt}  # for special fetching of prompts
 
 
 def process_chat(session, message):
@@ -29,21 +30,22 @@ def process_chat_real(session, message):
 
     exch_type = exchange_type(curr_exchange)
     try:
-        return EXCHANGE_TYPES[exch_type](session, message)
+        return EXCHANGE_TYPES_NEXT[exch_type](session, message)
     except KeyError:
         pass
 
     mapping = keywords(curr_exchange)
+    new_exchange = default_func(curr_exchange)
     for mess_word in clean(message).lower().split():
         if mess_word in mapping:
             new_exchange = mapping[mess_word]
-            set_session(session, new_exchange, data)
-            return prompt(new_exchange, data)
+            break
 
-    # default case
-    default = default_func(curr_exchange)
-    if default:
-        set_session(session, default, data)
-        return prompt(default, data)
-    else:
-        return None
+    if new_exchange:
+        set_session(session, new_exchange, data)
+        new_exch_type = exchange_type(new_exchange)
+        try:
+            return EXCHANGE_TYPES_PROMPT[new_exch_type](session)
+        except KeyError:
+            return prompt(new_exchange, data)
+    return None

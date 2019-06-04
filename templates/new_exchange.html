@@ -102,18 +102,21 @@
         }
 
         function configureNameType() {
+            document.getElementById("exchange-prompt").style.display = "block";
             document.getElementById("keywords-wrapper").style.display = "none";
             document.getElementById("exchange-default-label").style.display = "none";
             document.getElementById("namestuff-wrapper").style.display = "block";
         }
 
         function configureQueueType() {
+            document.getElementById("exchange-prompt").style.display = "none";
             document.getElementById("keywords-wrapper").style.display = "none";
             document.getElementById("exchange-default-label").style.display = "none";
             document.getElementById("namestuff-wrapper").style.display = "none";
         }
 
         function configureCustomType() {
+            document.getElementById("exchange-prompt").style.display = "block";
             document.getElementById("keywords-wrapper").style.display = "block";
             document.getElementById("exchange-default-label").style.display = "block";
             document.getElementById("namestuff-wrapper").style.display = "none";
@@ -180,7 +183,7 @@
         </select>
     </label>
     <br>
-    <label>
+    <label id="exchange-prompt">
         Prompt
         <textarea name="exchange-prompt" rows="6"
                   cols="30">{{ prompt(current_exchange) if current_exchange is defined }}</textarea>
