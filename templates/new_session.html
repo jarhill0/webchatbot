@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>New Session</title>
+
+    <script>
+        let sessionData;
+        let sessionDataCounter = 0;
+
+        window.onload = function () {
+            sessionData = document.getElementById('sessionData');
+        };
+
+        function addRow() {
+            sessionData.appendChild(makeRow());
+            sessionDataCounter++;
+        }
+
+        function removeRow() {
+            const children = sessionData.childNodes;
+            let toRemove = children.item(children.length - 1);
+            while (toRemove.tagName !== "LI") {
+                sessionData.removeChild(toRemove);
+                toRemove = children.item(children.length - 1);
+            }
+            if (isEmpty(toRemove) && sessionDataCounter >= 1) {
+                sessionData.removeChild(toRemove);
+                sessionDataCounter--;
+            }
+        }
+
+        function isEmpty(row) {
+            const children = row.childNodes;
+            for (let i = 0; i < children.length; i++) {
+                const child = children.item(i);
+                if (child.tagName === "INPUT" && child.value !== "")
+                    return false;
+
+            }
+            return true;
+        }
+
+        function makeRow() {
+            const row = document.createElement("li");
+
+            { // for the key
+                const input = document.createElement("input");
+                input.type = "text";
+                input.name = "data-key";
+                row.appendChild(input);
+            }
+
+            { // for the text label
+                const span = document.createElement('span');
+                span.innerText = ": ";
+                row.appendChild(span);
+            }
+
+            { // for the value
+                const input = document.createElement("input");
+                input.type = "text";
+                input.name = "data-value";
+                row.appendChild(input);
+            }
+
+            return row;
+        }
+
+        function checkForm() {
+            const phoneNumber = document.getElementById("phoneNumber").value;
+            const strippedNumber = naiveJoin(naiveFilter(phoneNumber, "0123456789", naiveIn));
+            const retval = strippedNumber.length === 10 || (strippedNumber.length === 11 && strippedNumber[0] === '1');
+            if (!retval) {
+                alert('Bad phone number! It should be 10 digits.');
+            }
+            return retval;
+        }
+
+        // Following three functions because I don't want to learn JS
+        function naiveJoin(iter) {
+            let out = '';
+            for (const thing of iter) {
+                out += thing;
+            }
+            return out
+        }
+
+        function* naiveFilter(iter, group, rule) {
+            for (const thing of iter) {
+                if (rule(thing, group))
+                    yield thing;
+            }
+        }
+
+        function naiveIn(item, group) {
+            for (const groupItem of group) {
+                if (item === groupItem)
+                    return true;
+            }
+            return false;
+        }
+    </script>
+</head>
+
+<body>
+{% include "header.html" %}
+<h1>New Session</h1>
+<form action="{{ url_for('new_session_post') }}" method="post" onsubmit="return checkForm()">
+    <label>
+        Phone Number:
+        <input name="session-id" type="tel" placeholder="+15555555555" id="phoneNumber">
+    </label>
+    <br>
+    <label>
+        Exchange:
+        <select name="exchange">
+            {% for name, prompt, default, type_ in all_exchanges %}
+                <option value="{{ name }}">{{ name }}{{ ' (' + type_ + ')' if type_ }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <br>
+    <label>
+        <input type="checkbox" name="send-prompt" checked>
+        Send prompt
+    </label>
+
+    <ul id="sessionData">
+        <li>
+            <input type="text" name="data-key">: <input type="text" name="data-value">
+        </li>
+    </ul>
+    <input type="button" onclick="addRow()" title="add row" value="+">
+    <input type="button" onclick="removeRow()" title="remove row" value="-">
+    <br><br>
+    <button type="submit">Submit</button>
+</form>
+
+{% if error is defined %}
+    <br>
+    <b>Error</b>: {{ error }}
+{% endif %}
+
+</body>
+</html>

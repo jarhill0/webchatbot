@@ -1,6 +1,7 @@
 from functools import wraps
 from re import compile, finditer
 from urllib.parse import urlparse
+from string import digits
 
 from flask import Flask, Response, make_response, redirect, render_template, request, url_for, jsonify
 from twilio.twiml.messaging_response import Message, MessagingResponse
@@ -175,6 +176,41 @@ def step_in():
         return render_template('stepin.html', session_id=session_id, exchange=exch, session_data=data,
                                log=get_log(session_id), all_exchanges=all_exchanges)
     return redirect(url_for('sessions'))
+
+
+@app.route('/sessions/new', methods=['GET'])
+@authenticated
+def new_session():
+    all_exchanges = tuple(exchange_translation.all_exchanges())
+    return render_template('new_session.html', all_exchanges=all_exchanges)
+
+
+@app.route('/sessions/new', methods=['POST'])
+@authenticated
+def new_session_post():
+    session_id = request.values.get('session-id')
+    exchange = request.values.get('exchange')
+    if not session_id or not exchange:
+        return render_template('new_session.html', all_exchanges=tuple(exchange_translation.all_exchanges()),
+                               error='Session ID and exchange are required!')
+    all_digits = set(digits)
+    id_digits = ''.join(d for d in session_id if d in all_digits)
+    if len(id_digits) == 10:
+        phone_num = '+1' + id_digits
+    elif len(id_digits) == 11 and id_digits[0] == '1':
+        phone_num = '+' + id_digits
+    else:
+        return render_template('new_session.html', all_exchanges=tuple(exchange_translation.all_exchanges()),
+                               error='Bad phone number! (should be 10 digits)')
+    send_prompt = request.values.get('send-prompt', 'on') == 'on'
+    keys = request.values.getlist('data-key')
+    values = request.values.getlist('data-value')
+    user_data = dict(zip(keys, values))
+    set_session(phone_num, exchange, user_data)
+    if send_prompt:
+        prompt = get_prompt(phone_num, exchange, user_data)
+        send_message(phone_num, prompt)
+    return render_template('new_session.html', all_exchanges=tuple(exchange_translation.all_exchanges()))
 
 
 @app.route('/send_message', methods=['POST'])

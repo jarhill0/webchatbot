@@ -32,6 +32,8 @@
 {% include "header.html" %}
 <h1>Sessions</h1>
 
+<a href="{{ url_for('new_session') }}">New Session</a>
+<br><br>
 <label>
     <input type="checkbox" id="queueToggle" onclick="updateQueueToggle()">
     <b>See queued only</b>
