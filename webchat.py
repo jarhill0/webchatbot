@@ -228,6 +228,7 @@ def send_manual_message():
     message = body.get('message')
     if message is None or session is None:
         return 'Message and session must be provided!', 400
+    send_message(session, message)
     return message
 
 
