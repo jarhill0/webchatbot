@@ -1,6 +1,11 @@
-from storage import Tangents
+from storage import TangentTracker, Tangents
 
 TANGENTS = Tangents()
+TRACKER = TangentTracker()
+
+
+class NoTangentsException(Exception):
+    """Raised when there are no tangents fitting a query."""
 
 
 def all_tangents():
@@ -8,7 +13,7 @@ def all_tangents():
 
     :returns: A 3-tuple of (id, rank, tangent).
     """
-    return TANGENTS
+    return list(TANGENTS)
 
 
 def delete_tangent(tangent_id):
@@ -29,6 +34,21 @@ def get_tangent(tangent_id):
     if row is None:
         return None, None, None
     return row
+
+
+def get_unseen_tangent(user_id):
+    """Get a tangent the user hasn't seen and mark it as seen.
+
+    :param user_id: The ID of a user.
+    :returns: The text of the first tangent the user hasn't seen.
+    """
+    seen = set(thing[0] for thing in TRACKER.get_all_seen(user_id))
+    print(seen)
+    for tangent_id, _, text in all_tangents():
+        if tangent_id not in seen:
+            TRACKER.set_seen(tangent_id, user_id)
+            return text
+    raise NoTangentsException('No unseen tangents for user {!r}.'.format(user_id))
 
 
 def set_tangent(rank, tangent_text, tangent_id=None):

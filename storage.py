@@ -321,6 +321,49 @@ class Tangents(Storage):
         conn.commit()
 
 
+class TangentTracker(Storage):
+    """Class to track which tangents have been seen by which users."""
+    TABLE_NAME = 'tangent_tracker'
+    TABLE_SCHEMA = 'tangent_id INTEGER NOT NULL, user_id TEXT NOT NULL'
+
+    def clear_user(self, user_id):
+        """Mark all tangents as unseen by a user.
+
+        :param user_id: The id of the user in question.
+        """
+        conn = self.connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'DELETE FROM {tab} WHERE user_id=?'.format(tab=self.TABLE_NAME),
+            (user_id,))
+        conn.commit()
+
+    def get_all_seen(self, user_id):
+        """Return the IDs of all tangents the user has seen.
+
+        :param user_id: The ID of the user.
+        :returns: The IDs of all tangents the user has seen, as some kind of iterable.
+        """
+        cursor = self.connection().cursor()
+        return cursor.execute(
+            'SELECT tangent_id from {tab} WHERE user_id=?'.format(
+                tab=self.TABLE_NAME),
+            (user_id,)).fetchall()
+
+    def set_seen(self, tangent_id, user_id):
+        """Set a user as having seen a particular tangent.
+
+        :param tangent_id: The id of the tangent, an integer.
+        :param user_id: The user id, a string.
+        """
+        conn = self.connection()
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO {} VALUES (?, ?)'.format(
+            self.TABLE_NAME),
+            (tangent_id, user_id))
+        conn.commit()
+
+
 class Keywords(Storage):
     """Class to store the various keywords of Exchanges."""
     TABLE_NAME = 'keywords'

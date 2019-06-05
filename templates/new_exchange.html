@@ -95,6 +95,9 @@
                 case "queue":
                     configureQueueType();
                     break;
+                case "tangent":
+                    configureTangentType();
+                    break;
                 case "":
                     configureCustomType();
                     break;
@@ -112,6 +115,13 @@
             document.getElementById("exchange-prompt").style.display = "none";
             document.getElementById("keywords-wrapper").style.display = "none";
             document.getElementById("exchange-default-label").style.display = "none";
+            document.getElementById("namestuff-wrapper").style.display = "none";
+        }
+
+        function configureTangentType() {
+            document.getElementById("exchange-prompt").style.display = "none";
+            document.getElementById("keywords-wrapper").style.display = "none";
+            document.getElementById("exchange-default-label").style.display = "block";
             document.getElementById("namestuff-wrapper").style.display = "none";
         }
 
@@ -180,6 +190,12 @@
                     {% endif %}
             >Queue
             </option>
+            <option value="tangent"
+                    {% if curr_exch_type is defined and curr_exch_type == "tangent" %}
+                    selected
+                    {% endif %}>
+                Tangent
+            </option>
         </select>
     </label>
     <br>
@@ -190,7 +206,7 @@
     </label>
     <br>
     <label id="exchange-default-label">
-        Default successor interaction (optional)
+        Default successor interaction
         <input type="text" name="exchange-default"
                 {% if current_exchange is defined %}
                     {% set exchange_default=default(current_exchange) %}

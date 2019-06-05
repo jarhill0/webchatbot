@@ -1,9 +1,10 @@
 from json import dumps, loads
 
-from storage import ChatLog, Sessions
+from storage import ChatLog, Sessions, TangentTracker
 
 SESSIONS = Sessions()
 CHATLOG = ChatLog()
+TANGENT_TRACKER = TangentTracker()
 
 
 def all_sessions():
@@ -25,6 +26,7 @@ def clear_session(session_id):
     :param session_id: The ID of the session to clear.
     """
     SESSIONS.delete(session_id)
+    TANGENT_TRACKER.clear_user(session_id)
 
 
 def get_session(session_id):

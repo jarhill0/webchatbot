@@ -23,9 +23,8 @@
                 {'session': session, 'since': lastPoll.getTime() / 1000},
                 receivePoll,
                 'GET');
-
-            window.setTimeout(poll, 5000);
             lastPoll = new Date();
+            window.setTimeout(poll, 5000);
         }
 
 
@@ -41,8 +40,8 @@
                 chatLog.scrollTop = chatLog.scrollHeight;
             } else {
                 if (lastPollSuceeded) {
-                    alert("Polling error!");
                     lastPollSuceeded = false;
+                    alert("Polling error!");
                 }
             }
         }
@@ -52,28 +51,15 @@
             const userMessageContent = userMessage.value;
             const chatLog = document.getElementById("chatLog");
             const userP = document.createElement("p");
-            userP.innerText = "You: " + userMessageContent;
-            chatLog.appendChild(userP);
             userMessage.value = "";
 
             getResponse(userMessageContent);
         }
 
-        function appendResponse(response) {
-            const chatLog = document.getElementById("chatLog");
-            const botP = document.createElement("p");
-            if (response) {
-                botP.innerText = "Bot: " + response;
-                chatLog.appendChild(botP);
-                chatLog.scrollTop = chatLog.scrollHeight;  // scroll to bottom
-            }
-            lastPoll = new Date();
-        }
-
         function getResponse(message) {
             httpPostAsync("{{ url_for('get_chat_message') }}",
                 {'session': session, 'message': message},
-                appendResponse);
+                null);
         }
 
         // modified from https://stackoverflow.com/a/4033310/ and https://stackoverflow.com/a/38982661/

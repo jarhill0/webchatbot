@@ -2,10 +2,14 @@ from exchange_translation import default as default_func, exchange_type, keyword
 from name_exchange import name_exchange
 from queue_exchange import queue_exchange, queue_exchange_prompt
 from session_interface import get_session, log, set_session
+from send_sms import send_message
+from tangent_exchange import tangent_exchange_prompt, tangent_exchange
 from text_util import clean
 
-EXCHANGE_TYPES_NEXT = {'name': name_exchange, 'queue': queue_exchange}
-EXCHANGE_TYPES_PROMPT = {'queue': queue_exchange_prompt}  # for special fetching of prompts
+EXCHANGE_TYPES_NEXT = {'name': name_exchange, 'queue': queue_exchange, 'tangent': tangent_exchange}
+EXCHANGE_TYPES_PROMPT = {'queue': queue_exchange_prompt,
+                         'tangent': tangent_exchange_prompt}  # for special fetching of prompts
+EXCHANGE_TYPES_AUTOFOLLOW = {'tangent': True}
 
 
 def process_chat(session, message):
@@ -18,8 +22,29 @@ def process_chat(session, message):
     log(session=session, message=message, is_from_user=True)
     response = process_chat_real(session, message)
     if response is not None:
+        response = autofollow(session, response)
+    if response is not None:
         log(session=session, message=response, is_from_user=False)
     return response
+
+
+def autofollow(session, response):
+    """Autofollow, if necessary.
+
+    :param session: The session involved.
+    :param response: The response to proactively send if we are autofollowing.
+    :returns: The final response
+    """
+    while need_autofollow(session):
+        send_message(session, response)
+        response = process_chat_real(session, '')
+    return response
+
+
+def need_autofollow(session):
+    curr_exchange, _ = get_session(session)
+    exch_type = exchange_type(curr_exchange)
+    return EXCHANGE_TYPES_AUTOFOLLOW.get(exch_type, False)
 
 
 def process_chat_real(session, message):

@@ -1,19 +1,18 @@
 from functools import wraps
 from re import compile, finditer
-from urllib.parse import urlparse
 from string import digits
 
-from flask import Flask, Response, make_response, redirect, render_template, request, url_for, jsonify
+from flask import Flask, Response, jsonify, make_response, redirect, render_template, request, url_for
 from twilio.twiml.messaging_response import Message, MessagingResponse
 from werkzeug.datastructures import Headers
 
 import exchange_translation
-from process_chat import process_chat, get_prompt
-from session_interface import all_logged_convos, all_sessions, clear_session as session_clear, get_log, get_session, \
-    set_session, log as make_log
-from storage import Cookies, Images, Secrets
-from send_sms import send_sms
 import tangent_interface
+from process_chat import get_prompt, process_chat
+from send_sms import JANKY_GLOBALS, send_message
+from session_interface import all_logged_convos, all_sessions, clear_session as session_clear, get_log, get_session, \
+    set_session
+from storage import Cookies, Images, Secrets
 
 app = Flask(__name__)
 
@@ -125,6 +124,8 @@ def chat():
 @app.route('/chat_message', methods=['POST'])
 @authenticated
 def get_chat_message():
+    JANKY_GLOBALS['request_url'] = request.url
+    JANKY_GLOBALS['convert_func'] = convert_to_twilio_outbound
     body = request.get_json()
     session = body.get('session')
     if session is None:
@@ -228,16 +229,6 @@ def send_manual_message():
     if message is None or session is None:
         return 'Message and session must be provided!', 400
     return message
-
-
-def send_message(session, message):
-    if message is None:
-        return
-    make_log(session=session, message=message, is_from_user=False)
-    if session.startswith('+'):
-        p = urlparse(request.url)
-        absolute_base = '{}://{}'.format(p.scheme, p.netloc)
-        send_sms(session, **convert_to_twilio_outbound(message, absolute_base))
 
 
 def convert_to_twilio_outbound(text_message, url_base):
@@ -368,6 +359,8 @@ def redirect_root():
 @app.route('/twilio_sms', methods=['GET', 'POST'])
 def sms_reply():
     """Respond to Twilio SMS."""
+    JANKY_GLOBALS['request_url'] = request.url
+    JANKY_GLOBALS['convert_func'] = convert_to_twilio_outbound
     session = request.values.get('From')
     message = request.values.get('Body', '')
 
