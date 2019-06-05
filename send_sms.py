@@ -17,9 +17,6 @@ except KeyError:
 TWILIO = Client(ACCOUNT_SID, AUTH_TOKEN)
 
 
-JANKY_GLOBALS = dict()
-
-
 def send_sms(number, text, images):
     """Send an SMS message using Twilio.
 
@@ -30,11 +27,11 @@ def send_sms(number, text, images):
     return TWILIO.messages.create(body=text, media_url=images, from_=PHONE_NUM, to=number)
 
 
-def send_message(session, message):
+def send_message(session, message, request_url, convert_func):
     if message is None:
         return
     log(session=session, message=message, is_from_user=False)
     if session.startswith('+'):
-        p = urlparse(JANKY_GLOBALS['request_url'])
+        p = urlparse(request_url)
         absolute_base = '{}://{}'.format(p.scheme, p.netloc)
-        send_sms(session, **JANKY_GLOBALS['convert_func'](message, absolute_base))
+        send_sms(session, **convert_func(message, absolute_base))

@@ -9,7 +9,7 @@ from werkzeug.datastructures import Headers
 import exchange_translation
 import tangent_interface
 from process_chat import get_prompt, process_chat
-from send_sms import JANKY_GLOBALS, send_message
+from send_sms import send_message
 from session_interface import all_logged_convos, all_sessions, clear_session as session_clear, get_log, get_session, \
     set_session
 from storage import Cookies, Images, Secrets
@@ -124,8 +124,6 @@ def chat():
 @app.route('/chat_message', methods=['POST'])
 @authenticated
 def get_chat_message():
-    JANKY_GLOBALS['request_url'] = request.url
-    JANKY_GLOBALS['convert_func'] = convert_to_twilio_outbound
     body = request.get_json()
     session = body.get('session')
     if session is None:
@@ -230,6 +228,10 @@ def send_manual_message():
         return 'Message and session must be provided!', 400
     send_message(session, message)
     return message
+
+
+def send_message_wrapper(session, message):
+    send_message(session, message, request.url, convert_to_twilio_outbound)
 
 
 def convert_to_twilio_outbound(text_message, url_base):
@@ -360,8 +362,6 @@ def redirect_root():
 @app.route('/twilio_sms', methods=['GET', 'POST'])
 def sms_reply():
     """Respond to Twilio SMS."""
-    JANKY_GLOBALS['request_url'] = request.url
-    JANKY_GLOBALS['convert_func'] = convert_to_twilio_outbound
     session = request.values.get('From')
     message = request.values.get('Body', '')
 
