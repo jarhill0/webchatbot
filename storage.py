@@ -4,73 +4,85 @@ from os.path import dirname, join
 from secrets import token_hex
 
 
+class CursorManager:
+    """Class to manage acquiring a cursor and committing afterward."""
+
+    @staticmethod
+    def _connection():
+        return sqlite3.connect(join(dirname(__file__), 'chatbot.sqlite3'))
+
+    def __init__(self):
+        """Initialize the class by obtaining a connection."""
+        self._conn = self._connection()
+
+    def __enter__(self):
+        """Obtain a connection and cursor."""
+        return self._conn.cursor()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Commit the connection."""
+        self._conn.commit()
+        return False
+
+
 class Storage:
     TABLE_NAME = None
     TABLE_SCHEMA = ''
 
-    @staticmethod
-    def connection():
-        return sqlite3.connect(join(dirname(__file__), 'chatbot.sqlite3'))
-
     def __init__(self):
         if self.TABLE_NAME is None:
             raise NotImplementedError('`TABLE_NAME` needs to be specified.')
-        conn = self.connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {} ({})'.format(self.TABLE_NAME,
-                                                        self.TABLE_SCHEMA))
-        conn.commit()
+        self.cursor = CursorManager()
+        with self.cursor as cursor:
+            cursor.execute(
+                'CREATE TABLE IF NOT EXISTS {} ({})'.format(self.TABLE_NAME,
+                                                            self.TABLE_SCHEMA))
 
     def __len__(self):
-        cursor = self.connection().cursor()
-        return cursor.execute(
-            'SELECT Count(*) FROM {}'.format(self.TABLE_NAME)).fetchone()[0]
+        with self.cursor as cursor:
+            return cursor.execute(
+                'SELECT Count(*) FROM {}'.format(self.TABLE_NAME)).fetchone()[0]
 
     def _contains(self, column_name, item):
-        cursor = self.connection().cursor()
-        return cursor.execute(
-            'SELECT {col} FROM {tab} WHERE {col}=?'.format(tab=self.TABLE_NAME,
-                                                           col=column_name),
-            (item,)).fetchone()
+        with self.cursor as cursor:
+            return cursor.execute(
+                'SELECT {col} FROM {tab} WHERE {col}=?'.format(tab=self.TABLE_NAME,
+                                                               col=column_name),
+                (item,)).fetchone()
 
     def _get_row(self, key_name, value, *columns):
-        cursor = self.connection().cursor()
-        return cursor.execute('SELECT {cols} FROM {tab} WHERE {key}=?'.format(
-            tab=self.TABLE_NAME, key=key_name, cols=', '.join(columns)),
-            (value,)).fetchone()
+        with self.cursor as cursor:
+            return cursor.execute('SELECT {cols} FROM {tab} WHERE {key}=?'.format(
+                tab=self.TABLE_NAME, key=key_name, cols=', '.join(columns)),
+                (value,)).fetchone()
 
     def _iterate_column(self, column_name):
-        cursor = self.connection().cursor()
-        return (row[0] for row in cursor.execute(
-            'SELECT {col} from {tab} ORDER BY {col} ASC'.format(
-                col=column_name,
-                tab=self.TABLE_NAME)))
+        with self.cursor as cursor:
+            return (row[0] for row in cursor.execute(
+                'SELECT {col} from {tab} ORDER BY {col} ASC'.format(
+                    col=column_name,
+                    tab=self.TABLE_NAME)))
 
     def _iterate_columns(self, *columns, order_by=''):
-        cursor = self.connection().cursor()
-        return cursor.execute(
-            'SELECT {cols} from {tab} {order}'.format(cols=', '.join(columns),
-                                                      tab=self.TABLE_NAME,
-                                                      order=order_by))
+        with self.cursor as cursor:
+            return cursor.execute(
+                'SELECT {cols} from {tab} {order}'.format(cols=', '.join(columns),
+                                                          tab=self.TABLE_NAME,
+                                                          order=order_by))
 
     def _remove(self, column_name, value):
-        conn = self.connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            'DELETE FROM {tab} WHERE {col}=?'.format(tab=self.TABLE_NAME,
-                                                     col=column_name),
-            (value,))
-        conn.commit()
+        with self.cursor as cursor:
+            cursor.execute(
+                'DELETE FROM {tab} WHERE {col}=?'.format(tab=self.TABLE_NAME,
+                                                         col=column_name),
+                (value,))
 
     def clear(self):
-        conn = self.connection()
-        cursor = conn.cursor()
-        cursor.execute('DROP TABLE {}'.format(self.TABLE_NAME))
-        cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {} ({})'.format(self.TABLE_NAME,
-                                                        self.TABLE_SCHEMA))
-        conn.commit()
+        with self.cursor as cursor:
+            cursor.execute('DROP TABLE {}'.format(self.TABLE_NAME))
+            cursor.execute(
+                'CREATE TABLE IF NOT EXISTS {} ({})'.format(self.TABLE_NAME,
+                                                            self.TABLE_SCHEMA))
 
 
 class ChatLog(Storage):
@@ -91,13 +103,13 @@ class ChatLog(Storage):
         :param session: The session identifier.
         :returns: An iterable of (message_contents, is_from_user, timestamp).
         """
-        cursor = self.connection().cursor()
-        for text, is_from_user, timestamp in cursor.execute(
-                'SELECT message_contents, user_message, message_time FROM {tab} WHERE session_id=? '
-                'ORDER BY message_time ASC'.format(
-                    tab=self.TABLE_NAME),
-                (session,)):
-            yield text, bool(is_from_user), datetime.fromtimestamp(timestamp)
+        with self.cursor as cursor:
+            for text, is_from_user, timestamp in cursor.execute(
+                    'SELECT message_contents, user_message, message_time FROM {tab} WHERE session_id=? '
+                    'ORDER BY message_time ASC'.format(
+                        tab=self.TABLE_NAME),
+                    (session,)):
+                yield text, bool(is_from_user), datetime.fromtimestamp(timestamp)
 
     def log(self, session, message, is_from_user):
         """Add a log entry.
@@ -106,12 +118,10 @@ class ChatLog(Storage):
         :param message: The message contents as str.
         :param is_from_user: Whether or not the message is from the user, as a bool.
         """
-        conn = self.connection()
-        cursor = conn.cursor()
-        cursor.execute('INSERT INTO {} VALUES (?, ?, ?, ?)'.format(
-            self.TABLE_NAME),
-            (session, message, is_from_user, int(datetime.now().timestamp())))
-        conn.commit()
+        with self.cursor as cursor:
+            cursor.execute('INSERT INTO {} VALUES (?, ?, ?, ?)'.format(
+                self.TABLE_NAME),
+                (session, message, is_from_user, int(datetime.now().timestamp())))
 
 
 class Cookies(Storage):
@@ -121,25 +131,23 @@ class Cookies(Storage):
 
     def check(self, cookie):
         """Check if a cookie is valid."""
-        cursor = self.connection().cursor()
-        return cursor.execute('SELECT * FROM {} WHERE cookie=? AND expiration>?'.format(self.TABLE_NAME),
-                              (cookie, int(datetime.now().timestamp()))).fetchone() is not None
+        with self.cursor as cursor:
+            return cursor.execute('SELECT * FROM {} WHERE cookie=? AND expiration>?'.format(self.TABLE_NAME),
+                                  (cookie, int(datetime.now().timestamp()))).fetchone() is not None
 
     def new(self):
         """Store a new cookie and return it."""
         val = token_hex(30)
         exp_date = int((datetime.now() + self.VALID_LENGTH).timestamp())
-        conn = self.connection()
-        conn.cursor().execute('INSERT INTO {} VALUES (NULL, ?, ?)'.format(self.TABLE_NAME), (val, exp_date))
-        conn.commit()
+        with self.cursor as cursor:
+            cursor.execute('INSERT INTO {} VALUES (NULL, ?, ?)'.format(self.TABLE_NAME), (val, exp_date))
         return val
 
     def prune(self):
         """Remove cookies that are out-of-date."""
         now = int(datetime.now().timestamp())
-        conn = self.connection()
-        conn.cursor().execute('DELETE FROM {} WHERE expiration < ?'.format(self.TABLE_NAME), (now,))
-        conn.commit()
+        with self.cursor as cursor:
+            cursor.execute('DELETE FROM {} WHERE expiration < ?'.format(self.TABLE_NAME), (now,))
 
     def remove(self, cookie):
         """Remove a cookie as part of a logout."""
@@ -157,9 +165,9 @@ class Images(Storage):
         :param name: The name of the image.
         :returns: A tuple containing (The image, as bytes; the mimetype, as str)
         """
-        cursor = self.connection().cursor()
-        result = cursor.execute('SELECT image, mimetype FROM {} WHERE img_name=?'.format(self.TABLE_NAME),
-                                (name,)).fetchone()
+        with self.cursor as cursor:
+            result = cursor.execute('SELECT image, mimetype FROM {} WHERE img_name=?'.format(self.TABLE_NAME),
+                                    (name,)).fetchone()
         if result is None:
             raise KeyError('No known image called {!r}.'.format(name))
         return result
@@ -175,10 +183,8 @@ class Images(Storage):
         :param image: The image, as bytes.
         :param mimetype: The mimetype of the image.
         """
-        conn = self.connection()
-        cursor = conn.cursor()
-        cursor.execute('REPLACE INTO {} VALUES (?, ?, ?)'.format(self.TABLE_NAME), (name, image, mimetype))
-        conn.commit()
+        with self.cursor as cursor:
+            cursor.execute('REPLACE INTO {} VALUES (?, ?, ?)'.format(self.TABLE_NAME), (name, image, mimetype))
 
     def get(self, name, default=(None, None)):
         """Get an image or return a default value.
@@ -274,12 +280,10 @@ class Prompts(Storage):
         :param rank: The rank of this Exchange (default: None)
         :param type_: The type of this Exchange (default: None)
         """
-        conn = self.connection()
-        cursor = conn.cursor()
-        cursor.execute('REPLACE INTO {} VALUES (?, ?, ?, ?, ?)'.format(
-            self.TABLE_NAME),
-            (name, prompt, default, rank, type_))
-        conn.commit()
+        with self.cursor as cursor:
+            cursor.execute('REPLACE INTO {} VALUES (?, ?, ?, ?, ?)'.format(
+                self.TABLE_NAME),
+                (name, prompt, default, rank, type_))
 
 
 class Tangents(Storage):
@@ -313,12 +317,10 @@ class Tangents(Storage):
         :param tangent: The text of the tangent.
         :param id_: The id of a preexisting tangent to modify (default: None).
         """
-        conn = self.connection()
-        cursor = conn.cursor()
-        cursor.execute('REPLACE INTO {} VALUES (?, ?, ?)'.format(
-            self.TABLE_NAME),
-            (id_, rank, tangent))
-        conn.commit()
+        with self.cursor as cursor:
+            cursor.execute('REPLACE INTO {} VALUES (?, ?, ?)'.format(
+                self.TABLE_NAME),
+                (id_, rank, tangent))
 
 
 class TangentTracker(Storage):
@@ -331,12 +333,7 @@ class TangentTracker(Storage):
 
         :param user_id: The id of the user in question.
         """
-        conn = self.connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            'DELETE FROM {tab} WHERE user_id=?'.format(tab=self.TABLE_NAME),
-            (user_id,))
-        conn.commit()
+        self._remove('user_id', user_id)
 
     def get_all_seen(self, user_id):
         """Return the IDs of all tangents the user has seen.
@@ -344,11 +341,11 @@ class TangentTracker(Storage):
         :param user_id: The ID of the user.
         :returns: The IDs of all tangents the user has seen, as some kind of iterable.
         """
-        cursor = self.connection().cursor()
-        return cursor.execute(
-            'SELECT tangent_id from {tab} WHERE user_id=?'.format(
-                tab=self.TABLE_NAME),
-            (user_id,)).fetchall()
+        with self.cursor as cursor:
+            return cursor.execute(
+                'SELECT tangent_id from {tab} WHERE user_id=?'.format(
+                    tab=self.TABLE_NAME),
+                (user_id,)).fetchall()
 
     def set_seen(self, tangent_id, user_id):
         """Set a user as having seen a particular tangent.
@@ -356,12 +353,10 @@ class TangentTracker(Storage):
         :param tangent_id: The id of the tangent, an integer.
         :param user_id: The user id, a string.
         """
-        conn = self.connection()
-        cursor = conn.cursor()
-        cursor.execute('INSERT INTO {} VALUES (?, ?)'.format(
-            self.TABLE_NAME),
-            (tangent_id, user_id))
-        conn.commit()
+        with self.cursor as cursor:
+            cursor.execute('INSERT INTO {} VALUES (?, ?)'.format(
+                self.TABLE_NAME),
+                (tangent_id, user_id))
 
 
 class Keywords(Storage):
@@ -384,11 +379,11 @@ class Keywords(Storage):
 
         :param name: The name of the Exchange.
         """
-        cursor = self.connection().cursor()
-        response = cursor.execute(
-            'SELECT keyword, destination from {tab} WHERE exchange=?'.format(
-                tab=self.TABLE_NAME),
-            (name,)).fetchall()
+        with self.cursor as cursor:
+            response = cursor.execute(
+                'SELECT keyword, destination from {tab} WHERE exchange=?'.format(
+                    tab=self.TABLE_NAME),
+                (name,)).fetchall()
         return dict(response)
 
     def set(self, name, keyword, destination):
@@ -406,22 +401,20 @@ class Keywords(Storage):
         :param name: The name of the Exchange.
         :param keyword_map: A dict mapping keywords to Exchanges.
         """
-        conn = self.connection()
-        cursor = conn.cursor()
-        for keyword, destination in keyword_map.items():
-            pre_existing = cursor.execute(
-                'SELECT destination from {tab} WHERE '
-                'exchange=? AND keyword=?'.format(
-                    tab=self.TABLE_NAME), (name, keyword)).fetchone()
-            if pre_existing is None:
-                cursor.execute('INSERT INTO {tab} (exchange, keyword, '
-                               'destination) VALUES (?, ?, ?)'.format(
-                    tab=self.TABLE_NAME), (name, keyword, destination))
-            elif pre_existing[0] != destination:
-                cursor.execute('UPDATE {tab} SET destination=? WHERE '
-                               'exchange=? AND keyword=?'.format(
-                    tab=self.TABLE_NAME), (destination, name, keyword))
-        conn.commit()
+        with self.cursor as cursor:
+            for keyword, destination in keyword_map.items():
+                pre_existing = cursor.execute(
+                    'SELECT destination from {tab} WHERE '
+                    'exchange=? AND keyword=?'.format(
+                        tab=self.TABLE_NAME), (name, keyword)).fetchone()
+                if pre_existing is None:
+                    cursor.execute('INSERT INTO {tab} (exchange, keyword, '
+                                   'destination) VALUES (?, ?, ?)'.format(
+                        tab=self.TABLE_NAME), (name, keyword, destination))
+                elif pre_existing[0] != destination:
+                    cursor.execute('UPDATE {tab} SET destination=? WHERE '
+                                   'exchange=? AND keyword=?'.format(
+                        tab=self.TABLE_NAME), (destination, name, keyword))
 
 
 class Secrets(Storage):
@@ -429,17 +422,14 @@ class Secrets(Storage):
     TABLE_SCHEMA = 'name TEXT PRIMARY KEY NOT NULL, value TEXT'
 
     def __getitem__(self, item):
-        cursor = self.connection().cursor()
-        result = cursor.execute('SELECT value from {} where name=?'.format(self.TABLE_NAME), (item,)).fetchone()
+        result = self._get_row('name', item, 'value')
         if result is None:
             raise KeyError('No known secret with name {!r}.'.format(item))
         return result[0]
 
     def __setitem__(self, key, value):
-        conn = self.connection()
-        cursor = conn.cursor()
-        cursor.execute('REPLACE INTO {} VALUES (?, ?)'.format(self.TABLE_NAME), (key, value))
-        conn.commit()
+        with self.cursor as cursor:
+            cursor.execute('REPLACE INTO {} VALUES (?, ?)'.format(self.TABLE_NAME), (key, value))
 
     def get(self, key, default=None):
         try:
@@ -485,9 +475,7 @@ class Sessions(Storage):
         :param exchange: The session's current exchange.
         :param data: Any text data associated with the session.
         """
-        conn = self.connection()
-        cursor = conn.cursor()
-        cursor.execute('REPLACE INTO {} VALUES (?, ?, ?)'.format(
-            self.TABLE_NAME),
-            (session, exchange, data))
-        conn.commit()
+        with self.cursor as cursor:
+            cursor.execute('REPLACE INTO {} VALUES (?, ?, ?)'.format(
+                self.TABLE_NAME),
+                (session, exchange, data))
