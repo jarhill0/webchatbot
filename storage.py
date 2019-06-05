@@ -11,12 +11,9 @@ class CursorManager:
     def _connection():
         return sqlite3.connect(join(dirname(__file__), 'chatbot.sqlite3'))
 
-    def __init__(self):
-        """Initialize the class by obtaining a connection."""
-        self._conn = self._connection()
-
     def __enter__(self):
         """Obtain a connection and cursor."""
+        self._conn = self._connection()
         return self._conn.cursor()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
