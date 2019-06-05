@@ -82,7 +82,7 @@ def new_exchange_post():
     if existing:
         exchange_translation.delete(existing)
     exchange_translation.save_to_disk(name, prompt, keyword_map, default, rank, type_)
-    return redirect(url_for('exchanges'))
+    return redirect(url_for('exchanges', _anchor=name))
 
 
 @app.route('/exchanges', methods=['GET'])
