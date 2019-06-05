@@ -214,7 +214,7 @@ def new_session_post():
     set_session(phone_num, exchange, user_data)
     if send_prompt:
         prompt = get_prompt(phone_num, exchange, user_data)
-        send_message(phone_num, prompt)
+        send_message_wrapper(phone_num, prompt)
     return render_template('new_session.html', all_exchanges=tuple(exchange_translation.all_exchanges()))
 
 
@@ -226,7 +226,7 @@ def send_manual_message():
     message = body.get('message')
     if message is None or session is None:
         return 'Message and session must be provided!', 400
-    send_message(session, message)
+    send_message_wrapper(session, message)
     return message
 
 
@@ -268,7 +268,7 @@ def manual_set_exchange():
         data['queued'] = False
     if send_prompt:
         prompt = get_prompt(session_id, new_exch, data)
-        send_message(session_id, prompt)
+        send_message_wrapper(session_id, prompt)
     set_session(session_id, new_exch, data)
     return ''
 
