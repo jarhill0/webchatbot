@@ -1,9 +1,9 @@
+import webchat
 from exchange_translation import default as default_func, exchange_type, keywords, prompt
 from name_exchange import name_exchange
 from queue_exchange import queue_exchange, queue_exchange_prompt
 from session_interface import get_session, log, set_session
-from send_sms import send_message
-from tangent_exchange import tangent_exchange_prompt, tangent_exchange
+from tangent_exchange import tangent_exchange, tangent_exchange_prompt
 from text_util import clean
 
 EXCHANGE_TYPES_NEXT = {'name': name_exchange, 'queue': queue_exchange, 'tangent': tangent_exchange}
@@ -36,7 +36,7 @@ def autofollow(session, response):
     :returns: The final response
     """
     while need_autofollow(session):
-        send_message(session, response)
+        webchat.send_message_wrapper(session, response)
         response = process_chat_real(session, '')
     return response
 
