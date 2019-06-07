@@ -215,7 +215,7 @@ def new_session_post():
     if send_prompt:
         prompt = get_prompt(phone_num, exchange, user_data)
         send_message_wrapper(phone_num, prompt)
-    return render_template('new_session.html', all_exchanges=tuple(exchange_translation.all_exchanges()))
+    return redirect(url_for('new_session'))
 
 
 @app.route('/send_message', methods=['POST'])
