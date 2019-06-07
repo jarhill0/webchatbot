@@ -28,7 +28,7 @@ def send_sms(number, text, images):
 
 
 def send_message(session, message, request_url, convert_func):
-    if message is None:
+    if not message:
         return
     log(session=session, message=message, is_from_user=False)
     if session.startswith('+'):
