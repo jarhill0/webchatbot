@@ -10,12 +10,6 @@
         let lastPollSuceeded = true;
 
         window.onload = function () {
-            document.getElementById("adminMessage").onkeydown = function (event) {
-                if (event.code === "Enter") {
-                    updateChat();
-                }
-            };
-
             poll();
         };
 
