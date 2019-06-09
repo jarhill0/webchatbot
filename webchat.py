@@ -374,7 +374,7 @@ def sms_reply():
         media_key = 'MediaUrl{}'.format(i)
         url = request.values.get(media_key)
         media.append(url)
-    message = ''.join('USER_IMAGE: {} '.format(url) for url in media) + message
+    message = ''.join('USER_IMAGE: {}\n'.format(url) for url in media) + message
 
     bot_response = process_chat(session, message)
 
