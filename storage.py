@@ -26,10 +26,13 @@ class Storage:
     TABLE_NAME = None
     TABLE_SCHEMA = ''
 
+    @property
+    def cursor(self):
+        return CursorManager()
+
     def __init__(self):
         if self.TABLE_NAME is None:
             raise NotImplementedError('`TABLE_NAME` needs to be specified.')
-        self.cursor = CursorManager()
         with self.cursor as cursor:
             cursor.execute(
                 'CREATE TABLE IF NOT EXISTS {} ({})'.format(self.TABLE_NAME,
