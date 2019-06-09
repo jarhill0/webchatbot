@@ -201,13 +201,13 @@
         <input type="checkbox" id="deQueueBox" checked>
         Remove from queue
     </label>
-    <br>
-    <label>
-        <input type="checkbox" id="sendPromptBox" checked>
-        Send prompt
-    </label>
-    <br>
 {% endif %}
+<br>
+<label>
+    <input type="checkbox" id="sendPromptBox" checked>
+    Send prompt
+</label>
+<br>
 <button onclick="updateExchange()">Update</button>
 
 <ul id="sessionData">
@@ -227,7 +227,7 @@
             <b>{{ 'User' if is_from_user else 'Bot' }}</b>:
             {% for word in message.split() %}
                 {% if word.startswith('https://api.twilio.com/') %}
-                    <img src="{{ word }}" height="800px" alt="user image">
+                    <img src="{{ word }}" height="800px" alt="[user image failed to load]">
                 {% else %}
                     {{ word }}
                 {% endif %}
