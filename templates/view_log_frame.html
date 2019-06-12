@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script>
+        const session = "{{ name }}";
+        let lastPoll = new Date(0);
+        let lastPollSuceeded = true;
+
+        window.onload = function () {
+            poll();
+        };
+
+        function poll() {
+            httpAsync("{{ url_for('poll_for_stepin') }}",
+                {'session': session, 'since': lastPoll.getTime() / 1000},
+                receivePoll,
+                'GET');
+
+            window.setTimeout(poll, 5000);
+            lastPoll = new Date();
+        }
+
+        /*
+        {% for message, is_from_user, timestamp in log %}
+        <tr>
+            <td style="min-width: 10em;">[{{ timestamp }}]</td>
+            <td style="float: right;"><b>{{ 'User' if is_from_user else 'Bot' }}</b>:</td>
+            <td>{% for word in message.split() %}
+                {% if word.startswith('https://api.twilio.com/') %}
+                    <img src="{{ word }}" height="800px" alt="[user image failed to load]">
+                {% else %}
+                    {{ word }}
+                {% endif %}
+            {% endfor %}</td>
+        </tr>
+    {% endfor %}
+         */
+
+        function receivePoll(success, response) {
+            if (success) {
+                lastPollSuceeded = true;
+                document.getElementById("connectionWarning").style.display = "none";
+                const chatLog = document.getElementById("chatLog");
+                let foundAny = false;
+                for (const message of JSON.parse(response)) {
+                    const newTR = document.createElement("tr");
+
+                    let [text, fromUser, date] = message;
+
+                    {
+                        const dateTD = document.createElement("td");
+                        dateTD.style.minWidth = "10em";
+                        dateTD.innerText = "[" + date + "]";
+                        newTR.appendChild(dateTD);
+                    }
+
+                    {
+                        const nameTD = document.createElement("td");
+                        nameTD.style.float = "right";
+                        const bold = document.createElement("b");
+                        bold.innerText = fromUser ? "User" : "Bot";
+                        nameTD.appendChild(bold);
+                        const colonSpan = document.createElement("span");
+                        colonSpan.innerText = ":";
+                        nameTD.appendChild(colonSpan);
+                        newTR.appendChild(nameTD);
+                    }
+
+                    {
+                        const textTD = document.createElement("td");
+                        let textSpan = document.createElement("span");
+                        for (const chunk of text.split(/(\s+)/)) { // https://stackoverflow.com/a/26425713/
+                            if (chunk.startsWith('https://api.twilio.com/')) {
+                                textTD.appendChild(textSpan);
+                                textSpan = document.createElement("span");
+                                const img = document.createElement("img");
+                                img.alt = "[user image failed to load]";
+                                img.src = chunk;
+                                img.style.maxHeight = "600px";
+                                textTD.appendChild(img);
+                            } else {
+                                textSpan.innerText += chunk;
+                            }
+                        }
+                        textTD.appendChild(textSpan);
+                        newTR.appendChild(textTD);
+                    }
+
+                    chatLog.appendChild(newTR);
+                    foundAny = true;
+                }
+                if (foundAny)
+                    chatLog.scrollTop = chatLog.scrollHeight;
+            } else {
+                if (lastPollSuceeded) {
+                    lastPollSuceeded = false;
+                    document.getElementById("connectionWarning").style.display = "block";
+                    alert("Polling error!");
+                }
+            }
+        }
+
+        // modified from https://stackoverflow.com/a/4033310/ and https://stackoverflow.com/a/38982661/
+        function httpAsync(url, body, callback, method = 'POST') {
+            const xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState === 4) {
+                    callback(xmlHttp.status === 200, xmlHttp.responseText);
+                }
+
+            };
+            if (method === 'GET') {
+                url += formatParams(body);
+            }
+            xmlHttp.open(method, url, true); // true for asynchronous
+            if (method === 'POST') {
+                xmlHttp.setRequestHeader('Content-Type', 'application/json');
+                xmlHttp.send(JSON.stringify(body));
+            } else if (method === 'GET') {
+                xmlHttp.send();
+            }
+        }
+
+        function formatParams(params) {
+            return "?" + Object
+                .keys(params)
+                .map(function (key) {
+                    return key + "=" + encodeURIComponent(params[key])
+                })
+                .join("&")
+        }
+    </script>
+</head>
+<body>
+<h2 style="color: red; display: none; z-index:1000; height: 1em; width: 8em; position:fixed; top:0; left:1em;
+background-color: black"
+    id="connectionWarning">
+    Connection offline</h2>
+<table id="chatLog">
+    {% for message, is_from_user, timestamp in log %}
+        <tr>
+            <td style="min-width: 10em;">[{{ timestamp }}]</td>
+            <td style="float: right;"><b>{{ 'User' if is_from_user else 'Bot' }}</b>:</td>
+            <td>{% for word in message.split() %}
+                {% if word.startswith('https://api.twilio.com/') %}
+                    <img src="{{ word }}" height="800px" alt="[user image failed to load]">
+                {% else %}
+                    {{ word }}
+                {% endif %}
+            {% endfor %}</td>
+        </tr>
+    {% endfor %}
+</table>
+</body>
+</html>

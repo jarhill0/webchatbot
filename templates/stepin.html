@@ -1,49 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="height:100%">
 <head>
     <meta charset="UTF-8">
     <title>Step In</title>
 
     <script>
         const session = "{{ session_id }}";
-        let lastPoll = new Date();
-        let lastPollSuceeded = true;
-
-        window.onload = function () {
-            poll();
-        };
-
-        function poll() {
-            httpAsync("{{ url_for('poll_for_stepin') }}",
-                {'session': session, 'since': lastPoll.getTime() / 1000},
-                receivePoll,
-                'GET');
-
-            window.setTimeout(poll, 5000);
-            lastPoll = new Date();
-        }
-
-
-        function receivePoll(success, response) {
-            if (success) {
-                lastPollSuceeded = true;
-                const chatLog = document.getElementById("chatLog");
-                let foundAny = false;
-                for (const message of JSON.parse(response)) {
-                    const newP = document.createElement("p");
-                    chatLog.appendChild(newP);
-                    newP.innerText = (message[1] ? "User:" : "Bot:") + " " + message[0];
-                    foundAny = true;
-                }
-                if (foundAny)
-                    chatLog.scrollTop = chatLog.scrollHeight;
-            } else {
-                if (lastPollSuceeded) {
-                    lastPollSuceeded = false;
-                    alert("Polling error!");
-                }
-            }
-        }
 
         function updateChat() {
             const adminMessage = document.getElementById("adminMessage");
@@ -183,7 +145,7 @@
         }
     </style>
 </head>
-<body>
+<body style="height: 95%">
 {% include "header.html" %}
 <h1>{{ session_id }}</h1>
 <label>
@@ -221,20 +183,8 @@
         <button onclick="updateData()">Update</button>
     </li>
 </ul>
-<div id="chatLog">
-    {% for message, is_from_user, timestamp in log %}
-        <p>
-            <b>{{ 'User' if is_from_user else 'Bot' }}</b>:
-            {% for word in message.split() %}
-                {% if word.startswith('https://api.twilio.com/') %}
-                    <img src="{{ word }}" height="800px" alt="[user image failed to load]">
-                {% else %}
-                    {{ word }}
-                {% endif %}
-            {% endfor %}
-        </p>
-    {% endfor %}
-</div>
+<iframe src="{{ url_for('view_log_frame', log=session_id) }}" frameborder="0" id="logFrame"
+        style="border-style: none; width: 100%; height: 50%;"></iframe>
 <div id="messageEntry">
     <label>Message
         <textarea id="adminMessage" autofocus></textarea>

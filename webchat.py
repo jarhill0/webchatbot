@@ -162,7 +162,16 @@ def all_logs():
 def view_log():
     to_view = request.values.get('log')
     if to_view:
-        return render_template('view_log.html', name=to_view, log=get_log(to_view))
+        return render_template('view_log.html', name=to_view)
+    return redirect(url_for('all_logs'))
+
+
+@app.route('/viewlogframe', methods=['GET'])
+@authenticated
+def view_log_frame():
+    to_view = request.values.get('log')
+    if to_view:
+        return render_template('view_log_frame.html', name=to_view)
     return redirect(url_for('all_logs'))
 
 
@@ -174,7 +183,7 @@ def step_in():
         exch, data = get_session(session_id)
         all_exchanges = tuple(exchange_translation.all_exchanges())
         return render_template('stepin.html', session_id=session_id, exchange=exch, session_data=data,
-                               log=get_log(session_id), all_exchanges=all_exchanges)
+                               all_exchanges=all_exchanges)
     return redirect(url_for('sessions'))
 
 
@@ -321,7 +330,7 @@ def poll_for_stepin():
 
 
 def time_filter(log, after):
-    return [items[:2] for items in log if items[2].timestamp() > after]  # filter by timestamp
+    return [items for items in log if items[2].timestamp() > after]  # filter by timestamp
 
 
 @app.route('/login', methods=['GET'])
