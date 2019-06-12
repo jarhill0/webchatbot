@@ -2,6 +2,7 @@ from functools import wraps
 from re import compile, finditer
 from string import digits
 
+import requests
 from flask import Flask, Response, jsonify, make_response, redirect, render_template, request, url_for
 from twilio.twiml.messaging_response import Message, MessagingResponse
 from werkzeug.datastructures import Headers
@@ -11,7 +12,7 @@ import tangent_interface
 from process_chat import get_prompt, process_chat
 from send_sms import send_message
 from session_interface import all_logged_convos, all_sessions, clear_session as session_clear, get_log, get_session, \
-    set_session
+    has_conversed, set_session
 from storage import Cookies, Images, Secrets
 
 app = Flask(__name__)
@@ -376,6 +377,8 @@ def sms_reply():
 
     if session is None:
         return Response(status=400, response='Error. No phone number.')
+    if not has_conversed(session):
+        send_welcome_message(session)
 
     num_media = int(request.values.get('NumMedia', 0))
     media = []
@@ -512,6 +515,36 @@ def delete_tangent():
     if id_:
         tangent_interface.delete_tangent(id_)
     return redirect(url_for('tangents'))
+
+
+def send_welcome_message(phone_num):
+    try:
+        url = SECRETS['welcome_url']
+        exchange = SECRETS['welcome_exchange_name']
+        password = SECRETS['welcome_system_password']
+    except KeyError:
+        return
+    try:
+        requests.post(url, data={'phone_num': phone_num,
+                                 'exchange': exchange,
+                                 'password': password})
+    except requests.exceptions.RequestException:
+        return
+
+
+@app.route('/welcome', methods=['POST'])
+def receive_welcome_request():
+    if request.values.get('password', '') != SECRETS['password']:
+        return 'Bad password!', 401
+    num = request.values.get('phone_num')
+    exchange = request.values.get('exchange')
+    if not num or not exchange:
+        return 'phone_num and exchange must both be provided!', 400
+    if not has_conversed(num):
+        message_contents = get_prompt(num, exchange, {})
+        send_message_wrapper(num, message_contents)
+        return message_contents
+    return ''
 
 
 if __name__ == '__main__':

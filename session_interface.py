@@ -83,3 +83,14 @@ def get_log(session):
     :returns: An iterable of (message, is_from_user, timestamp).
     """
     return CHATLOG.get(session)
+
+
+def has_conversed(session):
+    """Determine whether a particular user has ever conversed with us before.
+
+    :param session: The session identifier, likely a phone number.
+    :returns: A ``bool`` representing whether this user has conversed.
+    """
+    for row in get_log(session):
+        return True
+    return False
