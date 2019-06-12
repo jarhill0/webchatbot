@@ -137,20 +137,6 @@
 background-color: black"
     id="connectionWarning">
     Connection offline</h2>
-<table id="chatLog">
-    {% for message, is_from_user, timestamp in log %}
-        <tr>
-            <td style="min-width: 10em;">[{{ timestamp }}]</td>
-            <td style="float: right;"><b>{{ 'User' if is_from_user else 'Bot' }}</b>:</td>
-            <td>{% for word in message.split() %}
-                {% if word.startswith('https://api.twilio.com/') %}
-                    <img src="{{ word }}" height="800px" alt="[user image failed to load]">
-                {% else %}
-                    {{ word }}
-                {% endif %}
-            {% endfor %}</td>
-        </tr>
-    {% endfor %}
-</table>
+<table id="chatLog"></table>
 </body>
 </html>
