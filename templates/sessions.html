@@ -21,6 +21,12 @@
             }
 
         }
+
+        function openAll(className) {
+            for (const link of document.getElementsByClassName(className)) {
+                window.open(link.href);
+            }
+        }
     </script>
     <style>
         .invisible {
@@ -38,12 +44,16 @@
     <input type="checkbox" id="queueToggle" onclick="updateQueueToggle()">
     <b>See queued only</b>
 </label>
+<br>
+<button onclick="openAll('view-log')">View all logs</button>
+<button onclick="openAll('step-in')">Step into all</button>
 <ol>
     {% for session_id, exchange, data in sessions %}
         <li
                 class="{{ 'queued' if data and data.get('queued') else 'unqueued' }}"
         >
-            <a href="{{ url_for('view_log', log=session_id) }}">{{ session_id }}</a>: <i>{{ exchange }}</i>
+            <a href="{{ url_for('view_log', log=session_id) }}" class="view-log">{{ session_id }}</a>:
+            <i>{{ exchange }}</i>
             {% if data %}
                 <ul>
                     {% for key, value in data.items() %}
@@ -52,7 +62,7 @@
                 </ul>
             {% endif %}
             <br>
-            <a href="{{ url_for('step_in', session=session_id) }}">
+            <a href="{{ url_for('step_in', session=session_id) }}" class="step-in">
                 <button>Step In</button>
             </a>
             <form action="{{ url_for('clear_session') }}" method="post"
