@@ -68,13 +68,16 @@
         }
 
         function checkForm() {
+            document.getElementById('bypassBox').checked = false;
             const phoneNumber = document.getElementById("phoneNumber").value;
             const strippedNumber = naiveJoin(naiveFilter(phoneNumber, "0123456789", naiveIn));
             const retval = strippedNumber.length === 10 || (strippedNumber.length === 11 && strippedNumber[0] === '1');
+            let bypass = false;
             if (!retval) {
-                alert('Bad phone number! It should be 10 digits.');
+                bypass = confirm('Bad phone number! It should be 10 digits.\nPress OK to proceed anyway.');
+                document.getElementById('bypassBox').checked = bypass;
             }
-            return retval;
+            return retval || bypass;
         }
 
         // Following three functions because I don't want to learn JS
@@ -107,6 +110,7 @@
 {% include "header.html" %}
 <h1>New Session</h1>
 <form action="{{ url_for('new_session_post') }}" method="post" onsubmit="return checkForm()">
+    <input name="bypass" type="checkbox" hidden id="bypassBox">
     <label>
         Phone Number:
         <input name="session-id" type="tel" placeholder="+15555555555" id="phoneNumber">

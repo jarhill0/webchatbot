@@ -205,7 +205,10 @@ def new_session_post():
                                error='Session ID and exchange are required!')
     all_digits = set(digits)
     id_digits = ''.join(d for d in session_id if d in all_digits)
-    if len(id_digits) == 10:
+    bypass = request.values.get('bypass', 'off') == 'on'
+    if bypass:
+        phone_num = '+' + id_digits  # accept it as valid (international?)
+    elif len(id_digits) == 10:
         phone_num = '+1' + id_digits
     elif len(id_digits) == 11 and id_digits[0] == '1':
         phone_num = '+' + id_digits
