@@ -69,18 +69,18 @@
 
                     {
                         const textTD = document.createElement("td");
-                        let textSpan = document.createElement("span");
+                        let textSpan = makeChatSpan();
                         for (const chunk of text.split(/(\s+)/)) { // https://stackoverflow.com/a/26425713/
                             if (chunk.startsWith('https://api.twilio.com/')) {
                                 textTD.appendChild(textSpan);
-                                textSpan = document.createElement("span");
+                                textSpan = makeChatSpan();
                                 const img = document.createElement("img");
                                 img.alt = "[user image failed to load]";
                                 img.src = chunk;
                                 img.style.maxHeight = "600px";
                                 textTD.appendChild(img);
                             } else {
-                                textSpan.innerText += chunk;
+                                textSpan.textContent += chunk;
                             }
                         }
                         textTD.appendChild(textSpan);
@@ -99,6 +99,12 @@
                     alert("Polling error!");
                 }
             }
+        }
+
+        function makeChatSpan() {
+            const span = document.createElement("span");
+            span.style.whiteSpace = "pre-wrap";
+            return span
         }
 
         // modified from https://stackoverflow.com/a/4033310/ and https://stackoverflow.com/a/38982661/
