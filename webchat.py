@@ -546,6 +546,7 @@ def receive_welcome_request():
     if not has_conversed(num):
         message_contents = get_prompt(num, exchange, {})
         send_message_wrapper(num, message_contents)
+        set_session(num, exchange, {})
         return message_contents
     return ''
 
